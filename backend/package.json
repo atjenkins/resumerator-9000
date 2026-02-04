@@ -1,0 +1,37 @@
+{
+  "name": "resume-reviewer",
+  "version": "1.0.0",
+  "description": "AI-powered resume review and generation tool",
+  "main": "dist/cli/index.js",
+  "bin": {
+    "resume-review": "./dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/web/server.js",
+    "dev": "ts-node src/web/server.ts",
+    "cli": "node dist/cli/index.js",
+    "dev:cli": "ts-node src/cli/index.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mammoth": "^1.8.0",
+    "marked": "^17.0.1",
+    "multer": "^1.4.5-lts.1",
+    "pdf-parse": "^1.1.1",
+    "puppeteer": "^24.2.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.12.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
