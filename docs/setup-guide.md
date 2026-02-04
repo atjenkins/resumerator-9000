@@ -15,10 +15,11 @@ Step-by-step guide to set up Resumerator 9000 from scratch.
 ### 2. Get API Keys
 
 1. Go to **Settings** → **API**
-2. Copy these values:
+2. Make sure you're on the **"Publishable and secret API keys"** tab (NOT the legacy tab)
+3. Copy these values:
    - **Project URL** (e.g., `https://xxx.supabase.co`)
-   - **anon public** key (for frontend)
-   - **service_role** key (for backend - keep secret!)
+   - **Publishable** key (for frontend - safe to use in browser)
+   - **Secret** key (for backend - keep secret!)
 
 ### 3. Create Database Schema
 
@@ -219,7 +220,7 @@ ANTHROPIC_API_KEY=your-anthropic-key-here
 
 # Supabase
 SUPABASE_URL=https://xxx.supabase.co
-SUPABASE_SERVICE_KEY=your-service-role-key-here
+SUPABASE_SERVICE_KEY=your-secret-key-here
 ```
 
 ### 3. Test Backend
@@ -251,7 +252,7 @@ VITE_API_URL=http://localhost:3000
 
 # Supabase Configuration
 VITE_SUPABASE_URL=https://xxx.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-public-key-here
+VITE_SUPABASE_ANON_KEY=your-publishable-key-here
 ```
 
 ### 3. Test Frontend
@@ -347,7 +348,7 @@ git push -u origin main
    ```
    VITE_API_URL=https://your-app.railway.app
    VITE_SUPABASE_URL=https://xxx.supabase.co
-   VITE_SUPABASE_ANON_KEY=your-anon-key
+   VITE_SUPABASE_ANON_KEY=your-publishable-key
    ```
 5. Click "Deploy"
 
