@@ -391,11 +391,23 @@ VITE_API_URL=https://your-app.railway.app
    ```
 5. Click "Deploy"
 
-### 3. Update CORS
+### 3. Update Railway Backend with Vercel URL
 
-1. Copy your Vercel URL (e.g., `your-app.vercel.app`)
-2. Update backend CORS to allow this domain
-3. Redeploy backend on Railway
+Now that you have your Vercel URL, add it to Railway:
+
+1. Copy your Vercel URL (e.g., `https://resumerator-9000.vercel.app`)
+2. Go to **Railway** → Your Service → **Variables** tab
+3. Add new variable:
+   ```
+   FRONTEND_URL=https://your-app.vercel.app
+   ```
+4. Railway will automatically redeploy with CORS configured
+
+**Note:** CORS is already set up in your backend code to allow:
+
+- `localhost:5173` (local development)
+- Any `.vercel.app` domain (Vercel deployments)
+- Your specific `FRONTEND_URL` (production)
 
 ---
 
