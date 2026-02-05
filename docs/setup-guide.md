@@ -229,7 +229,7 @@ SUPABASE_SERVICE_KEY=your-secret-key-here
 npm run dev
 ```
 
-Should see: `Server running on port 3000`
+Should see: `🚀 Resume Reviewer server running at http://localhost:3000`
 
 ---
 
@@ -252,7 +252,7 @@ VITE_API_URL=http://localhost:3000
 
 # Supabase Configuration
 VITE_SUPABASE_URL=https://xxx.supabase.co
-VITE_SUPABASE_ANON_KEY=your-publishable-key-here
+SUPABASE_PUBLISHABLE_KEY=your-publishable-key-here
 ```
 
 ### 3. Test Frontend
@@ -305,25 +305,64 @@ git push -u origin main
 
 1. Click "New Project"
 2. Select "Deploy from GitHub repo"
-3. Choose `resumerator-9000`
-4. Click "Add variables"
-5. Add these environment variables:
+3. Choose `resumerator-9000` repository
+4. Railway will create a service and attempt initial deploy
+
+5. **Configure Service Settings:**
+
+   - Click on your service card (appears after project creation)
+   - Go to **Settings** tab (within the service, not project settings)
+   - Scroll down and find:
+     - **Root Directory** → Enter `backend`
+     - **Start Command** → Enter `npm start`
+     - **Build Command** → Enter `npm install && npm run build`
+
+6. **Add Environment Variables:**
+
+   - In the same service view, go to **Variables** tab
+   - Click "New Variable" and add each one:
+
    ```
    PORT=3000
    NODE_ENV=production
    ANTHROPIC_API_KEY=your-key
    SUPABASE_URL=https://xxx.supabase.co
-   SUPABASE_SERVICE_KEY=your-service-key
+   SUPABASE_SERVICE_KEY=your-secret-key
    ```
-6. Go to **Settings** → **Root Directory** → Set to `backend`
-7. Go to **Settings** → **Start Command** → Set to `npm start`
-8. Click "Deploy"
+
+7. Railway will automatically redeploy after you save the settings
 
 ### 3. Get Railway URL
 
-1. Once deployed, go to **Settings** → **Networking**
-2. Click "Generate Domain"
-3. Copy the URL (e.g., `your-app.railway.app`)
+1. Once deployed successfully, stay in your service view
+2. Go to **Settings** tab → **Networking** section
+3. Click "Generate Domain"
+4. **Set the port to 3000** (Railway may default to 8080, change it!)
+5. Click "Generate Domain"
+6. Copy the public URL (e.g., `resumerator-9000-production.up.railway.app`)
+7. **Save this URL** - you'll need it for:
+   - Frontend environment variable (`VITE_API_URL`)
+   - Testing the backend API
+
+### 4. Test Railway Backend
+
+Test your Railway backend is working:
+
+1. Visit your Railway URL in a browser (e.g., `https://[your-app].railway.app`)
+2. You should see a redirect or API response
+3. Check the Railway deployment logs if there are errors
+
+### 5. (Optional) Update Local Frontend to Use Railway Backend
+
+If you want to test with the production backend locally:
+
+Update `frontend/.env`:
+
+```env
+VITE_API_URL=https://your-app.railway.app
+```
+
+(You can switch back to `http://localhost:3000` for local backend development)
 
 ---
 
@@ -348,7 +387,7 @@ git push -u origin main
    ```
    VITE_API_URL=https://your-app.railway.app
    VITE_SUPABASE_URL=https://xxx.supabase.co
-   VITE_SUPABASE_ANON_KEY=your-publishable-key
+   SUPABASE_PUBLISHABLE_KEY=your-publishable-key
    ```
 5. Click "Deploy"
 

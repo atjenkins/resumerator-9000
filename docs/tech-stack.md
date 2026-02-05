@@ -135,7 +135,7 @@ npm run cli     # Run CLI commands
 ```env
 VITE_API_URL=http://localhost:3000
 VITE_SUPABASE_URL=your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_PUBLISHABLE_KEY=your-anon-key
 ```
 
 ### Backend (.env)
