@@ -24,172 +24,27 @@ Step-by-step guide to set up Resumerator 9000 from scratch.
 ### 3. Create Database Schema
 
 1. Go to **SQL Editor** in Supabase dashboard
-2. Create new query and paste:
+2. Click **New Query**
+3. Open `backend/database/migrations/001_initial_schema.sql` from your local project
+4. Copy the entire migration SQL and paste it into Supabase SQL Editor
+5. Click **Run** (or press Cmd/Ctrl + Enter)
+6. Verify tables created in **Table Editor**:
+   - `profiles` - with `display_name` and `content` fields
+   - `companies` - with `name`, `slug`, `content`
+   - `jobs` - with `title`, `slug`, `content`, optional `company_id`
+   - `resumes` - with `title`, `content`, optional `company_id`/`job_id`, `is_primary` flag
+   - `results` - with proper foreign keys to resumes/companies/jobs
 
-```sql
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+**Note:** The migration includes:
 
--- Profiles table (extends auth.users)
-CREATE TABLE profiles (
-  id UUID REFERENCES auth.users(id) PRIMARY KEY,
-  display_name TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+- Full schema with all tables
+- Row Level Security (RLS) policies
+- Auto-updating timestamp triggers
+- Optimized indexes
 
--- Resumes table
-CREATE TABLE resumes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES auth.users(id) NOT NULL,
-  title TEXT NOT NULL,
-  content TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+See `backend/database/README.md` for more details on the migration system.
 
--- Companies table
-CREATE TABLE companies (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES auth.users(id) NOT NULL,
-  name TEXT NOT NULL,
-  slug TEXT NOT NULL,
-  content TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(user_id, slug)
-);
-
--- Jobs table
-CREATE TABLE jobs (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  company_id UUID REFERENCES companies(id) ON DELETE CASCADE NOT NULL,
-  user_id UUID REFERENCES auth.users(id) NOT NULL,
-  title TEXT NOT NULL,
-  slug TEXT NOT NULL,
-  content TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(company_id, slug)
-);
-
--- Results table
-CREATE TABLE results (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES auth.users(id) NOT NULL,
-  type TEXT NOT NULL CHECK (type IN ('review', 'build')),
-  person_name TEXT,
-  company_name TEXT,
-  job_title TEXT,
-  content TEXT NOT NULL,
-  metadata JSONB,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Create indexes
-CREATE INDEX idx_resumes_user_id ON resumes(user_id);
-CREATE INDEX idx_companies_user_id ON companies(user_id);
-CREATE INDEX idx_jobs_user_id ON jobs(user_id);
-CREATE INDEX idx_jobs_company_id ON jobs(company_id);
-CREATE INDEX idx_results_user_id ON results(user_id);
-CREATE INDEX idx_results_type ON results(type);
-```
-
-3. Run the query
-
-### 4. Set Up Row Level Security (RLS)
-
-1. In SQL Editor, create new query and paste:
-
-```sql
--- Enable RLS
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE resumes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE results ENABLE ROW LEVEL SECURITY;
-
--- Profiles policies
-CREATE POLICY "Users can view own profile"
-  ON profiles FOR SELECT
-  USING (auth.uid() = id);
-
-CREATE POLICY "Users can update own profile"
-  ON profiles FOR UPDATE
-  USING (auth.uid() = id);
-
-CREATE POLICY "Users can insert own profile"
-  ON profiles FOR INSERT
-  WITH CHECK (auth.uid() = id);
-
--- Resumes policies
-CREATE POLICY "Users can view own resumes"
-  ON resumes FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can create own resumes"
-  ON resumes FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own resumes"
-  ON resumes FOR UPDATE
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own resumes"
-  ON resumes FOR DELETE
-  USING (auth.uid() = user_id);
-
--- Companies policies
-CREATE POLICY "Users can view own companies"
-  ON companies FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can create own companies"
-  ON companies FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own companies"
-  ON companies FOR UPDATE
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own companies"
-  ON companies FOR DELETE
-  USING (auth.uid() = user_id);
-
--- Jobs policies
-CREATE POLICY "Users can view own jobs"
-  ON jobs FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can create own jobs"
-  ON jobs FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own jobs"
-  ON jobs FOR UPDATE
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own jobs"
-  ON jobs FOR DELETE
-  USING (auth.uid() = user_id);
-
--- Results policies
-CREATE POLICY "Users can view own results"
-  ON results FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can create own results"
-  ON results FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own results"
-  ON results FOR DELETE
-  USING (auth.uid() = user_id);
-```
-
-2. Run the query
-
-### 5. Enable Authentication
+### 4. Enable Authentication
 
 1. Go to **Authentication** → **Providers**
 2. Enable **Email** provider (already enabled by default)
@@ -403,7 +258,7 @@ Now that you have your Vercel URL, add it to Railway:
    ```
 4. Railway will automatically redeploy with CORS configured
 
-**Note:** CORS is already set up in your backend code to allow:
+**Note:** CORS is+ already set up in your backend code to allow:
 
 - `localhost:5173` (local development)
 - Any `.vercel.app` domain (Vercel deployments)
@@ -474,10 +329,21 @@ Now that you have your Vercel URL, add it to Railway:
 
 ## Next Steps After Setup
 
-1. Add auth middleware to backend routes
-2. Create Supabase client services
-3. Update API routes to use Supabase
-4. Add React Query hooks for data fetching
-5. Update components to use new auth system
-6. Migrate existing `resume-data/` to database
-7. Test and iterate!
+1. **Frontend Authentication** - Implement Supabase Auth in frontend with sign up/login
+2. **React Query Integration** - Add React Query hooks for API data fetching
+3. **Profile Editor** - Build markdown editor for profile content
+4. **Resume Management** - UI for creating, viewing, and managing resumes
+5. **Company/Job Tracking** - UI for managing companies and jobs
+6. **AI Features** - Connect frontend to existing AI endpoints:
+   - Profile enrichment from uploaded resume
+   - Job/company info parsing
+   - Resume analysis and tailoring
+7. **Context Tracking** - Show which company/job a resume is tailored for
+8. **Test Complete Workflow** - End-to-end testing of all features
+
+## Database Schema Resources
+
+- **Migrations**: `backend/database/migrations/` - All schema change files
+- **Migration Guide**: `backend/database/README.md` - How to create and apply migrations
+- **Schema Details**: `docs/schema-enhancements-002.md` - Latest schema changes explained
+- **API Structure**: `docs/api-refactoring-summary.md` - RESTful API organization

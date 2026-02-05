@@ -1,192 +1,266 @@
-import type {
-  PersonInfo,
-  CompanyInfo,
-  JobInfo,
-  SavedResult,
-  ImportResumeResponse,
-  ImportJobResponse,
-  ImportCompanyResponse,
-  FileContentResponse,
-  ReviewResult,
-  JobFitResult,
-  BuilderResult,
-} from './types';
+import { supabase } from "./supabase";
 
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL || "";
 
-// Helper function for fetch with error handling
+// Helper function to get auth headers
+async function getAuthHeaders(): Promise<HeadersInit> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const headers: HeadersInit = {};
+
+  if (session?.access_token) {
+    headers["Authorization"] = `Bearer ${session.access_token}`;
+  }
+
+  return headers;
+}
+
+// Helper function for fetch with error handling and auth
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, options);
+  const authHeaders = await getAuthHeaders();
+
+  const finalOptions: RequestInit = {
+    ...options,
+    headers: {
+      ...authHeaders,
+      ...options?.headers,
+    },
+  };
+
+  // Build full URL - if url already starts with http, use as-is, otherwise prepend API_BASE
+  const fullUrl = url.startsWith("http") ? url : API_BASE + url;
+  const response = await fetch(fullUrl, finalOptions);
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(error.error || 'Request failed');
+    const error = await response
+      .json()
+      .catch(() => ({ error: response.statusText }));
+    throw new Error(error.error || "Request failed");
   }
   return response.json();
 }
 
-// Project APIs
-export async function getPeople(): Promise<PersonInfo[]> {
-  return fetchJson(`${API_BASE}/project/people`);
+// ============================================================
+// Profile API
+// ============================================================
+
+export async function getProfile() {
+  return fetchJson("/api/profile", { method: "GET" });
 }
 
-export async function getCompanies(): Promise<CompanyInfo[]> {
-  return fetchJson(`${API_BASE}/project/companies`);
-}
-
-export async function getJobs(company: string): Promise<JobInfo[]> {
-  return fetchJson(`${API_BASE}/project/jobs/${encodeURIComponent(company)}`);
-}
-
-export async function addPerson(name: string): Promise<PersonInfo> {
-  return fetchJson(`${API_BASE}/project/person`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
-  });
-}
-
-export async function addCompany(name: string): Promise<CompanyInfo> {
-  return fetchJson(`${API_BASE}/project/company`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
-  });
-}
-
-export async function addJob(company: string, title: string): Promise<JobInfo> {
-  return fetchJson(`${API_BASE}/project/job`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ company, title }),
-  });
-}
-
-// Import APIs
-export async function importResume(data: FormData): Promise<ImportResumeResponse> {
-  return fetchJson(`${API_BASE}/import/resume`, {
-    method: 'POST',
-    body: data,
-  });
-}
-
-export async function importJob(data: {
-  mode: 'create' | 'append';
-  company: string;
-  jobName: string;
-  jobText: string;
-}): Promise<ImportJobResponse> {
-  return fetchJson(`${API_BASE}/import/job`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+export async function updateProfile(data: {
+  display_name?: string;
+  content?: string;
+}) {
+  return fetchJson("/api/profile", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
 }
 
-export async function importCompany(data: {
-  mode: 'create' | 'append';
-  companyName: string;
-  companyText: string;
-}): Promise<ImportCompanyResponse> {
-  return fetchJson(`${API_BASE}/import/company`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+export async function enrichProfile(data: {
+  text: string;
+  mode?: "merge" | "replace";
+}) {
+  return fetchJson("/api/profile/enrich", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
 }
 
-// File editing APIs
-export async function getPersonFile(name: string): Promise<FileContentResponse> {
-  return fetchJson(`${API_BASE}/files/person/${encodeURIComponent(name)}`);
+// ============================================================
+// Companies API
+// ============================================================
+
+export async function getCompanies() {
+  return fetchJson("/api/companies", { method: "GET" });
 }
 
-export async function updatePersonFile(name: string, content: string): Promise<{ success: boolean }> {
-  return fetchJson(`${API_BASE}/files/person/${encodeURIComponent(name)}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content }),
+export async function getCompany(slug: string) {
+  return fetchJson(`/api/companies/${encodeURIComponent(slug)}`, {
+    method: "GET",
   });
 }
 
-export async function getCompanyFile(name: string): Promise<FileContentResponse> {
-  return fetchJson(`${API_BASE}/files/company/${encodeURIComponent(name)}`);
-}
-
-export async function updateCompanyFile(name: string, content: string): Promise<{ success: boolean }> {
-  return fetchJson(`${API_BASE}/files/company/${encodeURIComponent(name)}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content }),
-  });
-}
-
-export async function getJobFile(company: string, job: string): Promise<FileContentResponse> {
-  return fetchJson(`${API_BASE}/files/job/${encodeURIComponent(company)}/${encodeURIComponent(job)}`);
-}
-
-export async function updateJobFile(
-  company: string,
-  job: string,
-  content: string
-): Promise<{ success: boolean }> {
-  return fetchJson(`${API_BASE}/files/job/${encodeURIComponent(company)}/${encodeURIComponent(job)}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content }),
-  });
-}
-
-// Resume APIs
-export async function getPersonResumes(name: string): Promise<{ resumes: string[] }> {
-  return fetchJson(`${API_BASE}/files/person/${encodeURIComponent(name)}/resumes`);
-}
-
-export async function getResumeFile(name: string, resume: string): Promise<FileContentResponse> {
-  return fetchJson(`${API_BASE}/files/person/${encodeURIComponent(name)}/resumes/${encodeURIComponent(resume)}`);
-}
-
-export async function updateResumeFile(
-  name: string,
-  resume: string,
-  content: string
-): Promise<{ success: boolean }> {
-  return fetchJson(`${API_BASE}/files/person/${encodeURIComponent(name)}/resumes/${encodeURIComponent(resume)}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content }),
-  });
-}
-
-// Review and Build APIs
-export async function runReview(data: FormData): Promise<ReviewResult | JobFitResult> {
-  return fetchJson(`${API_BASE}/review`, {
-    method: 'POST',
-    body: data,
-  });
-}
-
-export async function runBuild(data: Record<string, any>): Promise<BuilderResult> {
-  return fetchJson(`${API_BASE}/build`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+export async function createCompany(data: { name: string; content?: string }) {
+  return fetchJson("/api/companies", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
 }
 
-// Results APIs
-export async function getResults(filters?: {
+export async function updateCompany(
+  slug: string,
+  data: { name?: string; content?: string }
+) {
+  return fetchJson(`/api/companies/${encodeURIComponent(slug)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteCompany(slug: string) {
+  return fetchJson(`/api/companies/${encodeURIComponent(slug)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function parseCompanyInfo(formData: FormData) {
+  return fetchJson("/api/companies/parse", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+// ============================================================
+// Jobs API
+// ============================================================
+
+export async function getJobs(companySlug?: string) {
+  const url = companySlug
+    ? `/api/jobs?company=${encodeURIComponent(companySlug)}`
+    : "/api/jobs";
+  return fetchJson(url, { method: "GET" });
+}
+
+export async function getJob(id: string) {
+  return fetchJson(`/api/jobs/${id}`, { method: "GET" });
+}
+
+export async function createJob(data: {
+  title: string;
+  content?: string;
+  companyId?: string;
+}) {
+  return fetchJson("/api/jobs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateJob(
+  id: string,
+  data: { title?: string; content?: string; companyId?: string }
+) {
+  return fetchJson(`/api/jobs/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteJob(id: string) {
+  return fetchJson(`/api/jobs/${id}`, { method: "DELETE" });
+}
+
+export async function parseJobDescription(formData: FormData) {
+  return fetchJson("/api/jobs/parse", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+// ============================================================
+// Resumes API
+// ============================================================
+
+export async function getResumes() {
+  return fetchJson("/api/resumes", { method: "GET" });
+}
+
+export async function getResume(id: string) {
+  return fetchJson(`/api/resumes/${id}`, { method: "GET" });
+}
+
+export async function createResume(data: {
+  title: string;
+  content: string;
+  companyId?: string;
+  jobId?: string;
+  isPrimary?: boolean;
+}) {
+  return fetchJson("/api/resumes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateResume(
+  id: string,
+  data: {
+    title?: string;
+    content?: string;
+    companyId?: string;
+    jobId?: string;
+    isPrimary?: boolean;
+  }
+) {
+  return fetchJson(`/api/resumes/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteResume(id: string) {
+  return fetchJson(`/api/resumes/${id}`, { method: "DELETE" });
+}
+
+export async function analyzeResume(
+  id: string,
+  data: { jobText?: string; companyText?: string; save?: boolean }
+) {
+  return fetchJson(`/api/resumes/${id}/analyze`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function tailorResume(
+  id: string,
+  data: { jobId: string; save?: boolean }
+) {
+  return fetchJson(`/api/resumes/${id}/tailor`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function parseResume(formData: FormData) {
+  return fetchJson("/api/resumes/parse", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+// ============================================================
+// Analysis Results API
+// ============================================================
+
+export async function getAnalyses(filters?: {
   type?: string;
-  person?: string;
-  company?: string;
-}): Promise<SavedResult[]> {
+  resumeId?: string;
+}) {
   const params = new URLSearchParams();
-  if (filters?.type) params.append('type', filters.type);
-  if (filters?.person) params.append('person', filters.person);
-  if (filters?.company) params.append('company', filters.company);
+  if (filters?.type) params.append("type", filters.type);
+  if (filters?.resumeId) params.append("resumeId", filters.resumeId);
 
   const query = params.toString();
-  return fetchJson(`${API_BASE}/results${query ? `?${query}` : ''}`);
+  return fetchJson(`/api/analyses${query ? `?${query}` : ""}`, {
+    method: "GET",
+  });
 }
 
-export async function getResult(filename: string): Promise<any> {
-  return fetchJson(`${API_BASE}/results/${encodeURIComponent(filename)}`);
+export async function getAnalysis(id: string) {
+  return fetchJson(`/api/analyses/${id}`, { method: "GET" });
 }
