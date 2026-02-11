@@ -100,6 +100,46 @@ router.post(
 );
 
 /**
+ * POST /api/resumes/parse
+ * Parse a PDF/DOCX file and return structured markdown (no DB write).
+ * Used by frontend for "upload to enrich profile" and "upload resume" flows.
+ */
+router.post(
+  "/parse",
+  upload.single("file"),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const file = req.file;
+
+    if (!file) {
+      res.status(400).json({ error: "File is required" });
+      return;
+    }
+
+    const ext = path.extname(file.originalname).toLowerCase();
+    let content: string;
+
+    try {
+      if (ext === ".pdf") {
+        const pdfResult = await parsePdfBuffer(file.buffer);
+        content = pdfResult.content;
+      } else if (ext === ".docx") {
+        const docxResult = await parseDocxBuffer(file.buffer);
+        content = docxResult.content;
+      } else {
+        res.status(400).json({ error: "Unsupported file type" });
+        return;
+      }
+    } catch (parseError: any) {
+      throw new Error("Failed to parse file: " + parseError.message);
+    }
+
+    const agent = new ImportAgent();
+    const markdown = await agent.parseResume(content);
+    res.json({ markdown });
+  })
+);
+
+/**
  * GET /api/resumes/:id
  * Get a specific resume
  */

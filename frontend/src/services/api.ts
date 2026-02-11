@@ -91,8 +91,8 @@ export async function getCompanies() {
   return fetchJson("/api/companies", { method: "GET" });
 }
 
-export async function getCompany(slug: string) {
-  return fetchJson(`/api/companies/${encodeURIComponent(slug)}`, {
+export async function getCompany(id: string) {
+  return fetchJson(`/api/companies/${encodeURIComponent(id)}`, {
     method: "GET",
   });
 }
@@ -106,26 +106,27 @@ export async function createCompany(data: { name: string; content?: string }) {
 }
 
 export async function updateCompany(
-  slug: string,
+  id: string,
   data: { name?: string; content?: string }
 ) {
-  return fetchJson(`/api/companies/${encodeURIComponent(slug)}`, {
+  return fetchJson(`/api/companies/${encodeURIComponent(id)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
 }
 
-export async function deleteCompany(slug: string) {
-  return fetchJson(`/api/companies/${encodeURIComponent(slug)}`, {
+export async function deleteCompany(id: string) {
+  return fetchJson(`/api/companies/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
 }
 
-export async function parseCompanyInfo(formData: FormData) {
+export async function parseCompanyInfo(text: string, companyName?: string) {
   return fetchJson("/api/companies/parse", {
     method: "POST",
-    body: formData,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, companyName, mode: "create" }),
   });
 }
 
@@ -133,9 +134,9 @@ export async function parseCompanyInfo(formData: FormData) {
 // Jobs API
 // ============================================================
 
-export async function getJobs(companySlug?: string) {
-  const url = companySlug
-    ? `/api/jobs?company=${encodeURIComponent(companySlug)}`
+export async function getJobs(companyId?: string) {
+  const url = companyId
+    ? `/api/jobs?companyId=${encodeURIComponent(companyId)}`
     : "/api/jobs";
   return fetchJson(url, { method: "GET" });
 }
@@ -171,10 +172,15 @@ export async function deleteJob(id: string) {
   return fetchJson(`/api/jobs/${id}`, { method: "DELETE" });
 }
 
-export async function parseJobDescription(formData: FormData) {
+export async function parseJobDescription(
+  text: string,
+  jobName?: string,
+  companyId?: string
+) {
   return fetchJson("/api/jobs/parse", {
     method: "POST",
-    body: formData,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, jobName, companyId, mode: "create" }),
   });
 }
 
@@ -227,7 +233,7 @@ export async function deleteResume(id: string) {
 
 export async function analyzeResume(
   id: string,
-  data: { jobText?: string; companyText?: string; save?: boolean }
+  data: { companyId?: string; jobId?: string; save?: boolean }
 ) {
   return fetchJson(`/api/resumes/${id}/analyze`, {
     method: "POST",

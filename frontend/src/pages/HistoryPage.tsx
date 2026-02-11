@@ -24,8 +24,10 @@ export function HistoryPage() {
   const loadAnalyses = async () => {
     try {
       setLoading(true);
-      const data = await getAnalyses();
-      setAnalyses(data as Analysis[]);
+      const data = (await getAnalyses()) as any;
+      // Backend returns { results: [], pagination: {} }
+      const analyses = data.results || data || [];
+      setAnalyses(analyses as Analysis[]);
     } catch (error) {
       notifications.show({
         title: "Error",

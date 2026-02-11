@@ -86,11 +86,11 @@ export function CompaniesPage({ onNavigate }: CompaniesPageProps) {
     }
   };
 
-  const handleDelete = async (slug: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this company?")) return;
 
     try {
-      await deleteCompany(slug);
+      await deleteCompany(id);
       await loadCompanies();
       notifications.show({
         title: "Success",
@@ -149,7 +149,7 @@ export function CompaniesPage({ onNavigate }: CompaniesPageProps) {
                       variant="light"
                       leftSection={<IconEdit size={14} />}
                       onClick={() =>
-                        onNavigate("company-detail", { slug: company.slug })
+                        onNavigate("company-detail", { id: company.id })
                       }
                     >
                       Edit
@@ -159,7 +159,7 @@ export function CompaniesPage({ onNavigate }: CompaniesPageProps) {
                       variant="light"
                       color="red"
                       leftSection={<IconTrash size={14} />}
-                      onClick={() => handleDelete(company.slug)}
+                      onClick={() => handleDelete(company.id)}
                     >
                       Delete
                     </Button>

@@ -11,15 +11,20 @@ import { ResumesPage } from "./pages/ResumesPage";
 import { CompaniesPage } from "./pages/CompaniesPage";
 import { JobsPage } from "./pages/JobsPage";
 import { HistoryPage } from "./pages/HistoryPage";
+import { ResumeDetailPage } from "./pages/ResumeDetailPage";
+import { CompanyDetailPage } from "./pages/CompanyDetailPage";
+import { JobDetailPage } from "./pages/JobDetailPage";
 import { Login } from "./components/auth/Login";
 import { SignUp } from "./components/auth/SignUp";
 import { theme } from "./theme/theme";
 
 function AuthenticatedApp() {
   const [activePage, setActivePage] = useState("dashboard");
+  const [pageState, setPageState] = useState<any>(null);
 
-  const handleNavigate = (page: string, _state?: any) => {
+  const handleNavigate = (page: string, state?: any) => {
     setActivePage(page);
+    setPageState(state || null);
   };
 
   const renderPage = () => {
@@ -30,10 +35,34 @@ function AuthenticatedApp() {
         return <ProfilePage />;
       case "resumes":
         return <ResumesPage onNavigate={handleNavigate} />;
+      case "resume-detail":
+        return pageState?.id ? (
+          <ResumeDetailPage
+            onNavigate={handleNavigate}
+            resumeId={pageState.id}
+          />
+        ) : (
+          <DashboardPage onNavigate={handleNavigate} />
+        );
       case "companies":
         return <CompaniesPage onNavigate={handleNavigate} />;
+      case "company-detail":
+        return pageState?.id ? (
+          <CompanyDetailPage
+            onNavigate={handleNavigate}
+            companyId={pageState.id}
+          />
+        ) : (
+          <DashboardPage onNavigate={handleNavigate} />
+        );
       case "jobs":
         return <JobsPage onNavigate={handleNavigate} />;
+      case "job-detail":
+        return pageState?.id ? (
+          <JobDetailPage onNavigate={handleNavigate} jobId={pageState.id} />
+        ) : (
+          <DashboardPage onNavigate={handleNavigate} />
+        );
       case "history":
         return <HistoryPage />;
       default:

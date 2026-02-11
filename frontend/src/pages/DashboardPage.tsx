@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Title, Grid, Card, Text, Stack, Group, Button } from "@mantine/core";
 import {
   IconFileText,
@@ -7,18 +8,50 @@ import {
   IconUpload,
   IconPlus,
 } from "@tabler/icons-react";
+import {
+  getResumes,
+  getCompanies,
+  getJobs,
+  getAnalyses,
+} from "../services/api";
 
 interface DashboardPageProps {
   onNavigate: (page: string) => void;
 }
 
 export function DashboardPage({ onNavigate }: DashboardPageProps) {
-  // TODO: Fetch real stats from API
-  const stats = {
+  const [stats, setStats] = useState({
     resumes: 0,
     companies: 0,
     jobs: 0,
     analyses: 0,
+  });
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      const [resumesData, companiesData, jobsData, analysesData] =
+        await Promise.all([
+          getResumes(),
+          getCompanies(),
+          getJobs(),
+          getAnalyses(),
+        ]);
+
+      setStats({
+        resumes: (resumesData as any[]).length,
+        companies: (companiesData as any[]).length,
+        jobs: (jobsData as any[]).length,
+        analyses: (analysesData as any).results
+          ? (analysesData as any).results.length
+          : (analysesData as any[]).length || 0,
+      });
+    } catch (error) {
+      console.error("Failed to load dashboard stats", error);
+    }
   };
 
   return (

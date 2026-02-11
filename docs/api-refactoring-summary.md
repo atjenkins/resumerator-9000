@@ -46,34 +46,35 @@ backend/src/
 
 - `GET /` - List all resumes
 - `POST /` - Create resume
+- `POST /parse` - Parse PDF/DOCX file and return `{ markdown }` (no DB write)
 - `GET /:id` - Get resume
 - `PUT /:id` - Update resume
 - `DELETE /:id` - Delete resume
-- `POST /:id/analyze` - AI: Review resume (with optional context)
-- `POST /:id/tailor` - AI: Generate tailored resume for job
-- `POST /upload` - Upload & parse PDF/DOCX
+- `POST /:id/analyze` - AI: Review resume (expects `{ companyId?, jobId?, save? }`)
+- `POST /:id/tailor` - AI: Generate tailored resume for job (expects `{ jobId, save? }`)
+- `POST /upload` - Upload & parse PDF/DOCX, create resume in DB
 
 ### Company Routes (`/api/companies`)
 
 - `GET /` - List all companies
 - `POST /` - Create company
-- `GET /:id` - Get company
-- `PUT /:id` - Update company
-- `DELETE /:id` - Delete company
-- `POST /parse` - AI: Parse text into structured company
+- `GET /:id` - Get company by UUID (not slug)
+- `PUT /:id` - Update company by UUID (not slug)
+- `DELETE /:id` - Delete company by UUID (not slug)
+- `POST /parse` - AI: Parse text into structured company (expects JSON `{ text, companyName?, mode? }`)
 
 ### Job Routes (`/api/jobs`)
 
-- `GET /` - List all jobs (optional `?companyId=` filter)
+- `GET /` - List all jobs (optional `?companyId=uuid` filter, not slug)
 - `POST /` - Create job
 - `GET /:id` - Get job
 - `PUT /:id` - Update job
 - `DELETE /:id` - Delete job
-- `POST /parse` - AI: Parse text into structured job
+- `POST /parse` - AI: Parse text into structured job (expects JSON `{ text, jobName?, companyId?, mode? }`)
 
 ### Analysis Routes (`/api/analyses`)
 
-- `GET /` - List all analyses (with pagination)
+- `GET /` - List all analyses (returns `{ results: [], pagination: {} }`)
 - `GET /:id` - Get specific analysis
 - `DELETE /:id` - Delete analysis
 - `GET /stats/summary` - Get user statistics
@@ -157,10 +158,13 @@ backend/src/
 
 ### For Frontend
 
-1. Update `frontend/src/services/api.ts` with new endpoints
-2. Add authentication headers to all requests
-3. Handle UUID-based IDs instead of slugs
-4. Update state management for new data model
+1. ✅ Updated `frontend/src/services/api.ts` with new endpoints
+2. ✅ Added authentication headers to all requests
+3. ✅ Handle UUID-based IDs instead of slugs (companies use id, not slug)
+4. ✅ Updated state management for new data model
+5. ✅ Built detail/edit pages for Resume, Company, and Job
+6. ✅ Wired up Dashboard with real API stats
+7. ✅ Fixed History page to handle `{ results: [] }` response shape
 
 ---
 
@@ -258,14 +262,23 @@ backend/src/
 
 ## Status: ✅ Complete
 
-The backend has been successfully refactored into a clean, RESTful structure that's ready for:
+The backend has been successfully refactored into a clean, RESTful structure. The frontend has been migrated to React + Vite + Mantine and aligned with the new API contracts.
 
-- Multi-user authentication
-- Database integration
-- Production deployment
-- Frontend migration
+**Backend:**
+- ✅ Multi-user authentication
+- ✅ Database integration (Supabase)
+- ✅ RESTful API structure
+- ✅ All endpoints implemented
+
+**Frontend:**
+- ✅ React + Vite + Mantine UI
+- ✅ Authentication with Supabase
+- ✅ All CRUD pages (Profile, Resumes, Companies, Jobs, History)
+- ✅ Detail/edit pages for Resume, Company, Job
+- ✅ API contracts aligned with backend
+- ✅ Dashboard with real-time stats
 
 **Build Status:** ✅ Passing  
 **TypeScript:** ✅ No errors  
 **Structure:** ✅ Organized  
-**Ready for:** Frontend updates + Supabase integration
+**Ready for:** Production deployment
