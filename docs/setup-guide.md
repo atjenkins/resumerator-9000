@@ -238,12 +238,14 @@ VITE_API_URL=https://your-app.railway.app
    - **Root Directory**: `frontend`
    - **Build Command**: `npm run build`
    - **Output Directory**: `dist`
-4. Add Environment Variables:
+4. Add Environment Variables (all must be set for the app to load):
    ```
    VITE_API_URL=https://your-app.railway.app
    VITE_SUPABASE_URL=https://xxx.supabase.co
-   SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+   VITE_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
    ```
+   **Important:** Use `VITE_SUPABASE_PUBLISHABLE_KEY` (with the `VITE_` prefix). Without these, you'll see "Missing Supabase environment variables" in the browser console.
+   **VITE_API_URL** must be the full backend URL including `https://` (e.g. `https://resumerator-9000-production.up.railway.app`). If you omit the scheme, profile and other API calls will 404.
 5. Click "Deploy"
 
 ### 3. Update Railway Backend with Vercel URL
@@ -301,11 +303,11 @@ Now that you have your Vercel URL, add it to Railway:
 - Check `node_modules` installed: `npm install`
 - Check TypeScript compiles: `npm run build`
 
-### Frontend won't connect to backend
+### Frontend won't connect to backend / "Failed to load profile" / API 404
 
-- Check `VITE_API_URL` points to correct backend
-- Check CORS is configured in backend
-- Check browser console for errors
+- **VITE_API_URL** must be the full URL including `https://` (e.g. `https://your-app.railway.app`). If you set only the hostname (e.g. `resumerator-9000-production.up.railway.app`), the browser will request that as a path on your Vercel domain and get 404. In Vercel → Settings → Environment Variables, set `VITE_API_URL=https://your-railway-host.up.railway.app`, then redeploy.
+- Check CORS is configured in backend (Railway `FRONTEND_URL` set to your Vercel URL)
+- Check browser console and Network tab for the actual request URL
 
 ### Railway deployment fails
 
@@ -313,11 +315,15 @@ Now that you have your Vercel URL, add it to Railway:
 - Check build logs for errors
 - Verify all environment variables are set
 
-### Vercel deployment fails
+### Vercel deployment fails / "Missing Supabase environment variables"
 
 - Check root directory is set to `frontend`
 - Check build command is correct
-- Verify environment variables start with `VITE_`
+- In Vercel → Project → **Settings** → **Environment Variables**, add:
+  - `VITE_SUPABASE_URL` (your Supabase project URL)
+  - `VITE_SUPABASE_PUBLISHABLE_KEY` (Supabase publishable key)
+  - `VITE_API_URL` (your production backend URL, e.g. Railway)
+- All frontend env vars must start with `VITE_` to be available in the browser. Redeploy after adding or changing variables.
 
 ### Authentication not working
 

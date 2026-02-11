@@ -1,6 +1,17 @@
 import { supabase } from "./supabase";
 
-const API_BASE = import.meta.env.VITE_API_URL || "";
+// Normalize API base: must be full URL (https://...) so the browser doesn't treat hostname as a path
+function normalizeApiBase(raw: string | undefined): string {
+  if (!raw || typeof raw !== "string") return "";
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://"))
+    return trimmed.replace(/\/+$/, "");
+  // Hostname without scheme → assume HTTPS in production
+  return `https://${trimmed.replace(/\/+$/, "")}`;
+}
+
+const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL);
 
 // Helper function to get auth headers
 async function getAuthHeaders(): Promise<HeadersInit> {
