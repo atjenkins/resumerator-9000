@@ -85,4 +85,14 @@ export const designerTheme: AppTheme = {
     history:
       "Your creative process, documented. A gallery of your professional evolution.",
   },
+
+  featureColors: {
+    profile: "taupe",
+    resumes: "orange",
+    companies: "yellow",
+    jobs: "lime",
+    analyze: "pink",
+    generate: "grape",
+    history: "gray",
+  },
 };

@@ -85,4 +85,14 @@ export const robotTheme: AppTheme = {
     history:
       "System logs and event history. Complete audit trail of all operations.",
   },
+
+  featureColors: {
+    profile: "cyan",
+    resumes: "teal",
+    companies: "blue",
+    jobs: "indigo",
+    analyze: "green",
+    generate: "lime",
+    history: "gray",
+  },
 };

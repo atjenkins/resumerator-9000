@@ -85,4 +85,14 @@ export const defaultTheme: AppTheme = {
     history:
       "Everything you've done, logged and timestamped. Your alibi, if you will.",
   },
+
+  featureColors: {
+    profile: "blue",
+    resumes: "grape",
+    companies: "cyan",
+    jobs: "teal",
+    analyze: "orange",
+    generate: "pink",
+    history: "gray",
+  },
 };

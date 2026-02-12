@@ -85,4 +85,14 @@ export const fairiesTheme: AppTheme = {
     history:
       "Your book of career spells. Every chapter written in stardust.",
   },
+
+  featureColors: {
+    profile: "lavender",
+    resumes: "pink",
+    companies: "yellow",
+    jobs: "teal",
+    analyze: "orange",
+    generate: "violet",
+    history: "grape",
+  },
 };

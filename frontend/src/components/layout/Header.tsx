@@ -1,4 +1,4 @@
-import { Box, Title, Text, Container } from '@mantine/core';
+import { Box } from '@mantine/core';
 import { useThemeStore } from '../../theme/useThemeStore';
 import { getTheme } from '../../theme/themes';
 
@@ -10,18 +10,8 @@ export function Header() {
     <Box
       style={{
         background: appTheme.headerGradient,
-        padding: '2rem 0',
-        marginBottom: '2rem',
+        height: 16,
       }}
-    >
-      <Container size="xl">
-        <Title order={1} c="white" ta="center" mb="xs">
-          Resumerator 9000
-        </Title>
-        <Text c="white" ta="center" opacity={0.9} size="lg">
-          AI-Powered Resume Analysis & Building
-        </Text>
-      </Container>
-    </Box>
+    />
   );
 }

@@ -18,7 +18,7 @@ export function MainLayout({
 
   return (
     <>
-      <Header />
+      {activePage !== "home" && <Header />}
       <MantineAppShell
         navbar={{
           width: sidebarWidth,

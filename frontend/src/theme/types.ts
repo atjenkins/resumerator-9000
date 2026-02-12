@@ -32,6 +32,17 @@ export interface AppTheme {
     history: string;
   };
 
+  // Per-feature accent colors (Mantine color names)
+  featureColors: {
+    profile: string;
+    resumes: string;
+    companies: string;
+    jobs: string;
+    analyze: string;
+    generate: string;
+    history: string;
+  };
+
   // Future expansion (add when needed, won't break existing code)
   // illustrations?: Record<string, React.ComponentType>;
   // loadingVariant?: "bar" | "dots" | "orbit" | "sparkle";
