@@ -128,6 +128,7 @@ export async function getProfile() {
 export async function updateProfile(data: {
   display_name?: string;
   content?: string;
+  theme_id?: string;
 }) {
   return fetchJson("/api/profile", {
     method: "PUT",

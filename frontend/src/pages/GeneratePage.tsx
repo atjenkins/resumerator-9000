@@ -12,16 +12,20 @@ import {
   Divider,
   Box,
   TypographyStylesProvider,
+  useMantineTheme,
+  SimpleGrid,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { marked } from "marked";
 import { AIProgressBar } from "../components/shared/AIProgressBar";
+import { ResumeCard } from "../components/shared/ResumeCard";
 import {
   getResumes,
   getCompanies,
   getJobs,
   getProfile,
   generateResume,
+  type Resume as ResumeType,
 } from "../services/api";
 
 interface GeneratePageProps {
@@ -63,6 +67,7 @@ export function GeneratePage({
   onNavigate,
   preSelectedResumeId,
 }: GeneratePageProps) {
+  const theme = useMantineTheme();
   const [source, setSource] = useState<"resume" | "profile">(
     preSelectedResumeId ? "resume" : "profile"
   );
@@ -80,9 +85,24 @@ export function GeneratePage({
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<GenerateResult | null>(null);
 
+  // Generation history state
+  const [generatedResumes, setGeneratedResumes] = useState<ResumeType[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [historyOffset, setHistoryOffset] = useState(0);
+  const [hasMoreHistory, setHasMoreHistory] = useState(true);
+  
+  // Filter states
+  const [filterSource, setFilterSource] = useState<"resume" | "profile" | null>(null);
+  const [filterJobId, setFilterJobId] = useState<string | null>(null);
+
   useEffect(() => {
     loadData();
+    loadGenerationHistory(true);
   }, []);
+
+  useEffect(() => {
+    loadGenerationHistory(true);
+  }, [filterSource, filterJobId]);
 
   const loadData = async () => {
     try {
@@ -104,6 +124,49 @@ export function GeneratePage({
         message: "Failed to load data",
         color: "red",
       });
+    }
+  };
+
+  const loadGenerationHistory = async (reset: boolean = false) => {
+    try {
+      setLoadingHistory(true);
+      
+      // Get all resumes and filter for generated ones
+      const allResumes = await getResumes() as ResumeType[];
+      let filtered = allResumes.filter(r => r.origin === "generated");
+      
+      // Apply filters
+      if (filterSource) {
+        filtered = filtered.filter(r => r.source_type === filterSource);
+      }
+      if (filterJobId) {
+        filtered = filtered.filter(r => r.job_id === filterJobId);
+      }
+      
+      // Sort by creation date (newest first)
+      filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
+      // Pagination
+      const offset = reset ? 0 : historyOffset;
+      const paginated = filtered.slice(offset, offset + 10);
+      
+      if (reset) {
+        setGeneratedResumes(paginated);
+        setHistoryOffset(10);
+      } else {
+        setGeneratedResumes([...generatedResumes, ...paginated]);
+        setHistoryOffset(offset + 10);
+      }
+      
+      setHasMoreHistory(offset + 10 < filtered.length);
+    } catch (error) {
+      notifications.show({
+        title: "Error",
+        message: "Failed to load generation history",
+        color: "red",
+      });
+    } finally {
+      setLoadingHistory(false);
     }
   };
 
@@ -147,6 +210,10 @@ export function GeneratePage({
       });
 
       setResult(generateResult as GenerateResult);
+      
+      // Reload generation history to show the new one
+      loadGenerationHistory(true);
+      
       notifications.show({
         title: "Resume Generated",
         message: "Your tailored resume has been created",
@@ -319,10 +386,10 @@ export function GeneratePage({
             </Title>
             <Box
               style={{
-                border: "1px solid #dee2e6",
+                border: `1px solid ${theme.colors.gray[3]}`,
                 borderRadius: "4px",
                 padding: "1rem",
-                backgroundColor: "#fff",
+                backgroundColor: theme.white,
                 maxHeight: "600px",
                 overflow: "auto",
               }}
@@ -330,6 +397,77 @@ export function GeneratePage({
               {renderPreview(result.markdown)}
             </Box>
           </Card>
+        </>
+      )}
+
+      <Divider my="xl" label="Generation History" labelPosition="center" />
+
+      <Card shadow="sm" padding="lg">
+        <Stack gap="md">
+          <Text fw={500}>Filter Results</Text>
+          
+          <Group grow>
+            <Select
+              label="Source Type"
+              placeholder="All sources"
+              value={filterSource}
+              onChange={(value) => setFilterSource(value as typeof filterSource)}
+              data={[
+                { value: "", label: "All Sources" },
+                { value: "resume", label: "From Resume" },
+                { value: "profile", label: "From Profile" },
+              ]}
+              clearable
+            />
+            
+            <Select
+              label="Target Job"
+              placeholder="All jobs"
+              value={filterJobId}
+              onChange={setFilterJobId}
+              data={[
+                { value: "", label: "All Jobs" },
+                ...jobs.map((j) => ({ value: j.id, label: j.title })),
+              ]}
+              clearable
+            />
+          </Group>
+        </Stack>
+      </Card>
+
+      {loadingHistory && generatedResumes.length === 0 && (
+        <Text c="dimmed" ta="center">Loading generation history...</Text>
+      )}
+
+      {!loadingHistory && generatedResumes.length === 0 && (
+        <Card shadow="sm" padding="lg">
+          <Text c="dimmed" ta="center">No generated resumes found. Try adjusting your filters or generate a new resume.</Text>
+        </Card>
+      )}
+
+      {generatedResumes.length > 0 && (
+        <>
+          <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+            {generatedResumes.map((resume) => (
+              <ResumeCard
+                key={resume.id}
+                resume={resume}
+                onClick={() => onNavigate("resume-detail", { id: resume.id })}
+              />
+            ))}
+          </SimpleGrid>
+
+          {hasMoreHistory && (
+            <Group justify="center">
+              <Button
+                variant="light"
+                onClick={() => loadGenerationHistory(false)}
+                loading={loadingHistory}
+              >
+                Load More
+              </Button>
+            </Group>
+          )}
         </>
       )}
     </Stack>

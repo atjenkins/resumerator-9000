@@ -20,6 +20,7 @@ export interface Profile {
   id: string;
   display_name: string;
   content: string;
+  theme_id: string;
   created_at: string;
   updated_at: string;
 }

@@ -59,10 +59,10 @@ router.put(
   "/",
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user.id;
-    const { display_name, content } = req.body;
+    const { display_name, content, theme_id } = req.body;
 
-    if (!display_name && content === undefined) {
-      res.status(400).json({ error: "display_name or content is required" });
+    if (!display_name && content === undefined && theme_id === undefined) {
+      res.status(400).json({ error: "display_name, content, or theme_id is required" });
       return;
     }
 
@@ -72,6 +72,7 @@ router.put(
 
     if (display_name !== undefined) updates.display_name = display_name;
     if (content !== undefined) updates.content = content;
+    if (theme_id !== undefined) updates.theme_id = theme_id;
 
     const { data: profile, error } = await supabase
       .from("profiles")

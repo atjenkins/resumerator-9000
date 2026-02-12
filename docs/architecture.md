@@ -49,6 +49,8 @@ Anthropic Claude API
 profiles
 ├── id (uuid, FK to auth.users)
 ├── display_name (text)
+├── content (text)      -- markdown profile content
+├── theme_id (text)     -- UI theme preference: 'default' | 'robot' | 'designer' | 'fairies'
 ├── created_at (timestamp)
 └── updated_at (timestamp)
 
@@ -173,8 +175,9 @@ resumerator-9000/
 │   │   ├── components/           # React components
 │   │   │   ├── auth/            # Login, SignUp
 │   │   │   ├── layout/          # Header, Sidebar, MainLayout
-│   │   │   └── shared/          # MarkdownEditor, AIProgressBar, LoadingSpinner
+│   │   │   └── shared/          # MarkdownEditor, AIProgressBar, ThemePicker, LoadingSpinner
 │   │   ├── pages/               # Page components
+│   │   │   ├── HomePage.tsx         # NEW: Welcome page with how-it-works
 │   │   │   ├── DashboardPage.tsx
 │   │   │   ├── ProfilePage.tsx
 │   │   │   ├── ResumesPage.tsx
@@ -191,7 +194,15 @@ resumerator-9000/
 │   │   ├── services/
 │   │   │   ├── api.ts           # API client with all endpoints
 │   │   │   └── supabase.ts      # Supabase client
-│   │   └── theme/               # Mantine theme
+│   │   └── theme/               # Personality theming system
+│   │   │   ├── types.ts         # AppTheme interface
+│   │   │   ├── useThemeStore.ts # Zustand store with localStorage persistence
+│   │   │   └── themes/          # Theme presets
+│   │   │       ├── index.ts     # Theme registry and getTheme() helper
+│   │   │       ├── default.ts   # Purple professional theme
+│   │   │       ├── robot.ts     # Cyan technical theme
+│   │   │       ├── designer.ts  # Rose artsy theme
+│   │   │       └── fairies.ts   # Lavender whimsical theme
 │   ├── package.json
 │   └── vite.config.ts
 ├── backend/                       # Express API

@@ -10,16 +10,22 @@ import {
   Select,
   Loader,
   Badge,
+  SimpleGrid,
 } from "@mantine/core";
 import { IconArrowLeft, IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { MarkdownEditor } from "../components/shared/MarkdownEditor";
+import { JobCard } from "../components/shared/JobCard";
+import { CompanyCard } from "../components/shared/CompanyCard";
+import { AnalysisCard } from "../components/shared/AnalysisCard";
 import {
   getResume,
   updateResume,
   deleteResume,
   getCompanies,
   getJobs,
+  getAnalyses,
+  type Analysis,
 } from "../services/api";
 
 interface ResumeDetailPageProps {
@@ -72,11 +78,15 @@ export function ResumeDetailPage({
 
   const [companies, setCompanies] = useState<Company[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
+  
+  // Related data
+  const [relatedAnalyses, setRelatedAnalyses] = useState<Analysis[]>([]);
 
   useEffect(() => {
     loadResume();
     loadCompanies();
     loadJobs();
+    loadRelatedAnalyses();
   }, [resumeId]);
 
   const loadResume = async () => {
@@ -115,6 +125,18 @@ export function ResumeDetailPage({
       setJobs(data);
     } catch (error) {
       console.error("Failed to load jobs", error);
+    }
+  };
+
+  const loadRelatedAnalyses = async () => {
+    try {
+      const { results } = await getAnalyses({
+        resumeId,
+        limit: 10,
+      });
+      setRelatedAnalyses(results);
+    } catch (error) {
+      console.error("Failed to load related analyses", error);
     }
   };
 
@@ -221,6 +243,55 @@ export function ResumeDetailPage({
           </Button>
         </Group>
       </Group>
+
+      {(jobId || companyId) && (
+        <Card shadow="sm" padding="lg">
+          <Title order={3} mb="md">
+            Associated Job & Company
+          </Title>
+          <Group>
+            {jobId && (
+              <JobCard
+                job={jobs.find((j) => j.id === jobId) || { id: jobId, title: "Loading..." }}
+                companyName={
+                  companyId
+                    ? companies.find((c) => c.id === companyId)?.name
+                    : undefined
+                }
+                onClick={() => onNavigate("job-detail", { id: jobId })}
+                compact
+              />
+            )}
+            {companyId && !jobId && (
+              <CompanyCard
+                company={
+                  companies.find((c) => c.id === companyId) || { id: companyId, name: "Loading..." }
+                }
+                onClick={() => onNavigate("company-detail", { id: companyId })}
+                compact
+              />
+            )}
+          </Group>
+        </Card>
+      )}
+
+      {relatedAnalyses.length > 0 && (
+        <Card shadow="sm" padding="lg">
+          <Title order={3} mb="md">
+            Analyses of This Resume
+          </Title>
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+            {relatedAnalyses.map((analysis) => (
+              <AnalysisCard
+                key={analysis.id}
+                analysis={analysis}
+                onClick={() => onNavigate("analysis-detail", { id: analysis.id })}
+                compact
+              />
+            ))}
+          </SimpleGrid>
+        </Card>
+      )}
 
       <Card shadow="sm" padding="lg">
         <Stack gap="md">

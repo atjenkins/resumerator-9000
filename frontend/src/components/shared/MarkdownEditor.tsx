@@ -8,6 +8,7 @@ import {
   Box,
   Divider,
   TypographyStylesProvider,
+  useMantineTheme,
 } from "@mantine/core";
 import { useState, useRef } from "react";
 import { marked } from "marked";
@@ -44,6 +45,7 @@ export function MarkdownEditor({
   defaultView = "edit",
   height = 500,
 }: MarkdownEditorProps) {
+  const theme = useMantineTheme();
   const [hasChanges, setHasChanges] = useState(false);
   const [viewMode, setViewMode] = useState(defaultView);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -239,7 +241,7 @@ export function MarkdownEditor({
           <Box
             style={{
               flex: 1,
-              border: "1px solid #dee2e6",
+              border: `1px solid ${theme.colors.gray[3]}`,
               borderRadius: "4px",
               display: "flex",
             }}
@@ -269,13 +271,13 @@ export function MarkdownEditor({
             style={{
               flex: 1,
               overflow: "auto",
-              border: "1px solid #dee2e6",
+              border: `1px solid ${theme.colors.gray[3]}`,
               borderRadius: "4px",
               padding: "1rem",
-              backgroundColor: "#fff",
+              backgroundColor: theme.white,
             }}
           >
-            {value ? renderPreview() : <div style={{ color: "#868e96" }}>Preview will appear here...</div>}
+            {value ? renderPreview() : <div style={{ color: theme.colors.gray[6] }}>Preview will appear here...</div>}
           </Box>
         )}
       </Box>

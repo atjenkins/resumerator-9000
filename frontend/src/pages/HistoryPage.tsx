@@ -5,11 +5,11 @@ import {
   Card,
   Group,
   Text,
-  Badge,
-  Select,
   Button,
+  MultiSelect,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { ActivityCard } from "../components/shared/ActivityCard";
 import { getActivityLog, type ActivityLogEntry } from "../services/api";
 
 interface HistoryPageProps {
@@ -19,22 +19,42 @@ interface HistoryPageProps {
 export function HistoryPage({ onNavigate }: HistoryPageProps) {
   const [activities, setActivities] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterAction, setFilterAction] = useState<string | null>(null);
-  const [filterEntityType, setFilterEntityType] = useState<string | null>(null);
+  
+  // Multi-select filters with defaults (all except "update")
+  const [filterActions, setFilterActions] = useState<string[]>([
+    "create",
+    "delete",
+    "analyze",
+    "generate",
+    "upload",
+    "enrich",
+    "parse",
+  ]);
+  const [filterEntityTypes, setFilterEntityTypes] = useState<string[]>([]);
 
   useEffect(() => {
     loadActivity();
-  }, [filterAction, filterEntityType]);
+  }, [filterActions, filterEntityTypes]);
 
   const loadActivity = async () => {
     try {
       setLoading(true);
-      const filters: any = { limit: 100 };
-      if (filterAction) filters.action = filterAction;
-      if (filterEntityType) filters.entityType = filterEntityType;
-
-      const { activities: data } = await getActivityLog(filters);
-      setActivities(data);
+      
+      // Get all activities
+      const { activities: allData } = await getActivityLog({ limit: 1000 });
+      
+      // Filter client-side for multi-select support
+      let filtered = allData;
+      
+      if (filterActions.length > 0) {
+        filtered = filtered.filter((a) => filterActions.includes(a.action));
+      }
+      
+      if (filterEntityTypes.length > 0) {
+        filtered = filtered.filter((a) => filterEntityTypes.includes(a.entity_type));
+      }
+      
+      setActivities(filtered);
     } catch (error) {
       notifications.show({
         title: "Error",
@@ -46,28 +66,6 @@ export function HistoryPage({ onNavigate }: HistoryPageProps) {
     }
   };
 
-  const getActionColor = (action: string) => {
-    switch (action) {
-      case "create":
-        return "green";
-      case "update":
-        return "blue";
-      case "delete":
-        return "red";
-      case "analyze":
-        return "purple";
-      case "generate":
-        return "orange";
-      case "upload":
-        return "cyan";
-      case "enrich":
-        return "teal";
-      case "parse":
-        return "grape";
-      default:
-        return "gray";
-    }
-  };
 
   return (
     <Stack gap="xl">
@@ -79,41 +77,42 @@ export function HistoryPage({ onNavigate }: HistoryPageProps) {
       </Group>
 
       <Card shadow="sm" padding="lg">
-        <Group gap="md">
-          <Select
-            placeholder="Filter by action"
-            value={filterAction}
-            onChange={setFilterAction}
-            data={[
-              { value: "", label: "All Actions" },
-              { value: "create", label: "Create" },
-              { value: "update", label: "Update" },
-              { value: "delete", label: "Delete" },
-              { value: "analyze", label: "Analyze" },
-              { value: "generate", label: "Generate" },
-              { value: "upload", label: "Upload" },
-              { value: "enrich", label: "Enrich" },
-              { value: "parse", label: "Parse" },
-            ]}
-            clearable
-            style={{ flex: 1 }}
-          />
-          <Select
-            placeholder="Filter by entity type"
-            value={filterEntityType}
-            onChange={setFilterEntityType}
-            data={[
-              { value: "", label: "All Entities" },
-              { value: "resume", label: "Resume" },
-              { value: "profile", label: "Profile" },
-              { value: "company", label: "Company" },
-              { value: "job", label: "Job" },
-              { value: "analysis", label: "Analysis" },
-            ]}
-            clearable
-            style={{ flex: 1 }}
-          />
-        </Group>
+        <Stack gap="md">
+          <Text fw={500} size="sm">Filters</Text>
+          <Group gap="md" grow>
+            <MultiSelect
+              label="Actions"
+              placeholder="Select actions to show"
+              value={filterActions}
+              onChange={setFilterActions}
+              data={[
+                { value: "create", label: "Create" },
+                { value: "update", label: "Update" },
+                { value: "delete", label: "Delete" },
+                { value: "analyze", label: "Analyze" },
+                { value: "generate", label: "Generate" },
+                { value: "upload", label: "Upload" },
+                { value: "enrich", label: "Enrich" },
+                { value: "parse", label: "Parse" },
+              ]}
+              clearable
+            />
+            <MultiSelect
+              label="Entity Types"
+              placeholder="All entity types"
+              value={filterEntityTypes}
+              onChange={setFilterEntityTypes}
+              data={[
+                { value: "resume", label: "Resume" },
+                { value: "profile", label: "Profile" },
+                { value: "company", label: "Company" },
+                { value: "job", label: "Job" },
+                { value: "analysis", label: "Analysis" },
+              ]}
+              clearable
+            />
+          </Group>
+        </Stack>
       </Card>
 
       <Stack gap="md">
@@ -127,59 +126,11 @@ export function HistoryPage({ onNavigate }: HistoryPageProps) {
 
         {!loading &&
           activities.map((activity) => (
-            <Card
+            <ActivityCard
               key={activity.id}
-              shadow="sm"
-              padding="lg"
-              style={{ cursor: activity.entity_id ? "pointer" : "default" }}
-              onClick={() => {
-                if (activity.entity_id) {
-                  // Navigate based on entity type
-                  switch (activity.entity_type) {
-                    case "resume":
-                      onNavigate("resume-detail", { id: activity.entity_id });
-                      break;
-                    case "company":
-                      onNavigate("company-detail", { id: activity.entity_id });
-                      break;
-                    case "job":
-                      onNavigate("job-detail", { id: activity.entity_id });
-                      break;
-                    case "analysis":
-                      onNavigate("analysis-detail", { id: activity.entity_id });
-                      break;
-                  }
-                }
-              }}
-            >
-              <Stack gap="xs">
-                <Group justify="apart" align="start">
-                  <Group gap="sm">
-                    <Badge color={getActionColor(activity.action)}>
-                      {activity.action.toUpperCase()}
-                    </Badge>
-                    <Badge variant="light">{activity.entity_type}</Badge>
-                  </Group>
-                  <Text size="xs" c="dimmed">
-                    {new Date(activity.created_at).toLocaleString()}
-                  </Text>
-                </Group>
-
-                <Text fw={500}>{activity.display_title}</Text>
-
-                {activity.duration_ms && (
-                  <Text size="xs" c="dimmed">
-                    Completed in {(activity.duration_ms / 1000).toFixed(1)}s
-                  </Text>
-                )}
-
-                {activity.details && Object.keys(activity.details).length > 0 && (
-                  <Text size="xs" c="dimmed" style={{ whiteSpace: "pre-wrap" }}>
-                    {JSON.stringify(activity.details, null, 2)}
-                  </Text>
-                )}
-              </Stack>
-            </Card>
+              activity={activity}
+              onNavigate={onNavigate}
+            />
           ))}
       </Stack>
     </Stack>

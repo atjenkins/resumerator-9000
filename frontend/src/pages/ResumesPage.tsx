@@ -7,31 +7,21 @@ import {
   Group,
   Text,
   Grid,
-  Badge,
   Modal,
   TextInput,
   FileButton,
 } from "@mantine/core";
-import { IconPlus, IconUpload, IconStar } from "@tabler/icons-react";
+import { IconPlus, IconUpload } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
+import { ResumeCard } from "../components/shared/ResumeCard";
 import {
   getResumes,
   createResume,
   parseResume,
   getCompanies,
   getJobs,
+  type Resume,
 } from "../services/api";
-
-interface Resume {
-  id: string;
-  title: string;
-  content: string;
-  is_primary: boolean;
-  company_id?: string;
-  job_id?: string;
-  created_at: string;
-  updated_at: string;
-}
 
 interface Company {
   id: string;
@@ -208,78 +198,17 @@ export function ResumesPage({ onNavigate }: ResumesPageProps) {
         </Card>
       ) : (
         <Grid>
-          {resumes.map((resume) => {
-            const companyName = getCompanyName(resume.company_id);
-            const jobTitle = getJobTitle(resume.job_id);
-            const createdDate = new Date(resume.created_at);
-            const updatedDate = new Date(resume.updated_at);
-            const showUpdated =
-              updatedDate.getTime() - createdDate.getTime() > 1000;
-
-            return (
-              <Grid.Col key={resume.id} span={{ base: 12, md: 6, lg: 4 }}>
-                <Card
-                  shadow="sm"
-                  padding="lg"
-                  style={{
-                    height: "100%",
-                    cursor: "pointer",
-                    transition: "transform 0.2s, box-shadow 0.2s",
-                  }}
-                  onClick={() => onNavigate("resume-detail", { id: resume.id })}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 12px rgba(0, 0, 0, 0.15)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "";
-                  }}
-                >
-                  <Stack gap="sm">
-                    <Group justify="apart">
-                      <Text fw={500}>{resume.title}</Text>
-                      {resume.is_primary && (
-                        <Badge
-                          color="yellow"
-                          leftSection={<IconStar size={12} />}
-                        >
-                          Primary
-                        </Badge>
-                      )}
-                    </Group>
-
-                    {(companyName || jobTitle) && (
-                      <Group gap="xs">
-                        {companyName && (
-                          <Badge variant="light" color="blue" size="sm">
-                            {companyName}
-                          </Badge>
-                        )}
-                        {jobTitle && (
-                          <Badge variant="light" color="grape" size="sm">
-                            {jobTitle}
-                          </Badge>
-                        )}
-                      </Group>
-                    )}
-
-                    <Stack gap="xs" mt="auto">
-                      <Text size="xs" c="dimmed">
-                        Created: {createdDate.toLocaleString()}
-                      </Text>
-                      {showUpdated && (
-                        <Text size="xs" c="dimmed">
-                          Updated: {updatedDate.toLocaleString()}
-                        </Text>
-                      )}
-                    </Stack>
-                  </Stack>
-                </Card>
-              </Grid.Col>
-            );
-          })}
+          {resumes.map((resume) => (
+            <Grid.Col key={resume.id} span={{ base: 12, md: 6, lg: 4 }}>
+              <ResumeCard
+                resume={resume}
+                companyName={getCompanyName(resume.company_id) || undefined}
+                jobTitle={getJobTitle(resume.job_id) || undefined}
+                onClick={() => onNavigate("resume-detail", { id: resume.id })}
+                showHoverEffect
+              />
+            </Grid.Col>
+          ))}
         </Grid>
       )}
 

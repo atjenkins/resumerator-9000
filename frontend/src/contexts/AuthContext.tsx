@@ -8,6 +8,7 @@ import {
 import { User, Session, AuthError } from "@supabase/supabase-js";
 import { supabase, Profile } from "../services/supabase";
 import { notifications } from "@mantine/notifications";
+import { useThemeStore } from "../theme/useThemeStore";
 
 interface AuthContextType {
   user: User | null;
@@ -43,6 +44,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
       setProfile(data);
+      
+      // Sync theme preference from profile to store
+      if (data?.theme_id) {
+        useThemeStore.getState().setThemeId(data.theme_id);
+      }
     } catch (error) {
       console.error("Error fetching profile:", error);
       // Profile might not exist yet if trigger hasn't run

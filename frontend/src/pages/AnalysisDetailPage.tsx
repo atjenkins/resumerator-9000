@@ -14,6 +14,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { IconArrowLeft, IconTrash } from "@tabler/icons-react";
 import { getAnalysis, deleteAnalysis, type Analysis } from "../services/api";
+import { getScoreColor, getFitRatingColor } from "../utils/formatting";
 
 interface AnalysisDetailPageProps {
   onNavigate: (page: string, state?: any) => void;
@@ -86,13 +87,6 @@ export function AnalysisDetailPage({
       </Stack>
     );
   }
-
-  const getScoreColor = (score?: number) => {
-    if (!score) return "gray";
-    if (score >= 80) return "green";
-    if (score >= 60) return "yellow";
-    return "red";
-  };
 
   return (
     <Stack gap="xl">
@@ -196,7 +190,7 @@ export function AnalysisDetailPage({
               <Text fw={500} size="sm" c="dimmed">
                 Fit Rating
               </Text>
-              <Badge size="lg" color={analysis.fit_rating === "excellent" ? "green" : analysis.fit_rating === "good" ? "blue" : analysis.fit_rating === "moderate" ? "yellow" : "red"}>
+              <Badge size="lg" color={getFitRatingColor(analysis.fit_rating)}>
                 {analysis.fit_rating.toUpperCase()}
               </Badge>
             </div>

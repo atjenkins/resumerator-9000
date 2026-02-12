@@ -5,6 +5,7 @@ import { Notifications } from "@mantine/notifications";
 import { useState } from "react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { MainLayout } from "./components/layout/MainLayout";
+import { HomePage } from "./pages/HomePage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { ResumesPage } from "./pages/ResumesPage";
@@ -19,10 +20,11 @@ import { JobDetailPage } from "./pages/JobDetailPage";
 import { AnalysisDetailPage } from "./pages/AnalysisDetailPage";
 import { Login } from "./components/auth/Login";
 import { SignUp } from "./components/auth/SignUp";
-import { theme } from "./theme/theme";
+import { useThemeStore } from "./theme/useThemeStore";
+import { getTheme } from "./theme/themes";
 
 function AuthenticatedApp() {
-  const [activePage, setActivePage] = useState("dashboard");
+  const [activePage, setActivePage] = useState("home");
   const [pageState, setPageState] = useState<any>(null);
 
   const handleNavigate = (page: string, state?: any) => {
@@ -32,6 +34,8 @@ function AuthenticatedApp() {
 
   const renderPage = () => {
     switch (activePage) {
+      case "home":
+        return <HomePage onNavigate={handleNavigate} />;
       case "dashboard":
         return <DashboardPage onNavigate={handleNavigate} />;
       case "profile":
@@ -89,10 +93,10 @@ function AuthenticatedApp() {
             analysisId={pageState.id}
           />
         ) : (
-          <DashboardPage onNavigate={handleNavigate} />
+          <HomePage onNavigate={handleNavigate} />
         );
       default:
-        return <DashboardPage onNavigate={handleNavigate} />;
+        return <HomePage onNavigate={handleNavigate} />;
     }
   };
 
@@ -130,8 +134,11 @@ function AppContent() {
 }
 
 function App() {
+  const themeId = useThemeStore((s) => s.themeId);
+  const appTheme = getTheme(themeId);
+
   return (
-    <MantineProvider theme={theme}>
+    <MantineProvider theme={appTheme.mantineTheme}>
       <Notifications position="top-right" />
       <AuthProvider>
         <AppContent />

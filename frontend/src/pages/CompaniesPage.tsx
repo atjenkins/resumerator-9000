@@ -10,8 +10,9 @@ import {
   Modal,
   TextInput,
 } from "@mantine/core";
-import { IconPlus, IconBriefcase } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
+import { CompanyCard } from "../components/shared/CompanyCard";
 import { getCompanies, createCompany } from "../services/api";
 
 interface Company {
@@ -106,56 +107,15 @@ export function CompaniesPage({ onNavigate }: CompaniesPageProps) {
         </Card>
       ) : (
         <Grid>
-          {companies.map((company) => {
-            const createdDate = new Date(company.created_at);
-            const updatedDate = new Date(company.updated_at);
-            const showUpdated =
-              updatedDate.getTime() - createdDate.getTime() > 1000;
-
-            return (
-              <Grid.Col key={company.id} span={{ base: 12, md: 6, lg: 4 }}>
-                <Card
-                  shadow="sm"
-                  padding="lg"
-                  style={{
-                    height: "100%",
-                    cursor: "pointer",
-                    transition: "transform 0.2s, box-shadow 0.2s",
-                  }}
-                  onClick={() =>
-                    onNavigate("company-detail", { id: company.id })
-                  }
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 12px rgba(0, 0, 0, 0.15)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "";
-                  }}
-                >
-                  <Stack gap="sm">
-                    <Group>
-                      <IconBriefcase size={24} color="gray" />
-                      <Text fw={500}>{company.name}</Text>
-                    </Group>
-
-                    <Stack gap="xs" mt="auto">
-                      <Text size="xs" c="dimmed">
-                        Created: {createdDate.toLocaleString()}
-                      </Text>
-                      {showUpdated && (
-                        <Text size="xs" c="dimmed">
-                          Updated: {updatedDate.toLocaleString()}
-                        </Text>
-                      )}
-                    </Stack>
-                  </Stack>
-                </Card>
-              </Grid.Col>
-            );
-          })}
+          {companies.map((company) => (
+            <Grid.Col key={company.id} span={{ base: 12, md: 6, lg: 4 }}>
+              <CompanyCard
+                company={company}
+                onClick={() => onNavigate("company-detail", { id: company.id })}
+                showHoverEffect
+              />
+            </Grid.Col>
+          ))}
         </Grid>
       )}
 

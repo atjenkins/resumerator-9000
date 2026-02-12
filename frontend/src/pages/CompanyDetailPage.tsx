@@ -8,15 +8,26 @@ import {
   Card,
   Text,
   Loader,
+  SimpleGrid,
 } from "@mantine/core";
 import { IconArrowLeft, IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { MarkdownEditor } from "../components/shared/MarkdownEditor";
-import { getCompany, updateCompany, deleteCompany } from "../services/api";
+import { JobCard } from "../components/shared/JobCard";
+import { ResumeCard } from "../components/shared/ResumeCard";
+import { getCompany, updateCompany, deleteCompany, getJobs, getResumes, type Resume } from "../services/api";
 
 interface CompanyDetailPageProps {
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, state?: any) => void;
   companyId: string;
+}
+
+interface Job {
+  id: string;
+  title: string;
+  company_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface Company {
@@ -40,8 +51,13 @@ export function CompanyDetailPage({
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
 
+  // Related data
+  const [relatedJobs, setRelatedJobs] = useState<Job[]>([]);
+  const [relatedResumes, setRelatedResumes] = useState<Resume[]>([]);
+
   useEffect(() => {
     loadCompany();
+    loadRelatedData();
   }, [companyId]);
 
   const loadCompany = async () => {
@@ -60,6 +76,23 @@ export function CompanyDetailPage({
       onNavigate("companies");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadRelatedData = async () => {
+    try {
+      const [allJobs, allResumes] = await Promise.all([
+        getJobs() as Promise<Job[]>,
+        getResumes() as Promise<Resume[]>,
+      ]);
+
+      const filteredJobs = allJobs.filter((j) => j.company_id === companyId);
+      const filteredResumes = allResumes.filter((r) => r.company_id === companyId);
+
+      setRelatedJobs(filteredJobs);
+      setRelatedResumes(filteredResumes);
+    } catch (error) {
+      console.error("Failed to load related data", error);
     }
   };
 
@@ -162,6 +195,43 @@ export function CompanyDetailPage({
           </Button>
         </Group>
       </Group>
+
+      {relatedJobs.length > 0 && (
+        <Card shadow="sm" padding="lg">
+          <Title order={3} mb="md">
+            Jobs at This Company
+          </Title>
+          <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+            {relatedJobs.map((job) => (
+              <JobCard
+                key={job.id}
+                job={job}
+                companyName={name}
+                onClick={() => onNavigate("job-detail", { id: job.id })}
+                compact
+              />
+            ))}
+          </SimpleGrid>
+        </Card>
+      )}
+
+      {relatedResumes.length > 0 && (
+        <Card shadow="sm" padding="lg">
+          <Title order={3} mb="md">
+            Resumes for This Company
+          </Title>
+          <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+            {relatedResumes.map((resume) => (
+              <ResumeCard
+                key={resume.id}
+                resume={resume}
+                onClick={() => onNavigate("resume-detail", { id: resume.id })}
+                compact
+              />
+            ))}
+          </SimpleGrid>
+        </Card>
+      )}
 
       <Card shadow="sm" padding="lg">
         <Stack gap="md">

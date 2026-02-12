@@ -155,6 +155,31 @@ CREATE TABLE results (
 
 ---
 
+### `005_add_theme_to_profiles.sql`
+
+**Created:** 2026-02-12  
+**Description:** Add theme preference to user profiles for the personality-driven theming system.
+
+**Changes:**
+
+- **Alter:** `profiles` table to add `theme_id` column
+  - `theme_id TEXT NOT NULL DEFAULT 'default'`
+  - Stores user's selected theme: 'default' | 'robot' | 'designer' | 'fairies'
+  - No constraints - frontend validates theme IDs, falls back to 'default' if unknown
+- **Create:** Index on `theme_id` for faster queries (optional optimization)
+
+**Rollback:**
+
+```sql
+-- Remove theme index
+DROP INDEX IF EXISTS idx_profiles_theme_id;
+
+-- Remove theme column
+ALTER TABLE profiles DROP COLUMN IF EXISTS theme_id;
+```
+
+---
+
 ## How to Apply Migrations
 
 ### Via Supabase Dashboard (Recommended)

@@ -237,7 +237,13 @@ NODE_ENV=development
 - **Store pattern** - Centralized state with Zustand
 - **Query pattern** - Server state with React Query
 - **Page-based routing** - State-based navigation with App.tsx router
-- **Shared components** - Reusable UI components (MarkdownEditor, AIProgressBar, LoadingSpinner)
+- **Shared components** - Reusable UI components (MarkdownEditor, AIProgressBar, ThemePicker, LoadingSpinner)
+- **Personality theming system** - Zustand store with localStorage persistence + DB sync
+  - `AppTheme` type defines personality presets (colors, gradients, silly messages, feature descriptions)
+  - 4 themes: Default (purple), Robot (cyan/technical), Designer (rose/artsy), Fairies (lavender/whimsical)
+  - Theme ID stored in `profiles.theme_id` for cross-device sync
+  - localStorage cache prevents flash on load
+  - Extensible for future SVGs, component variants, animations
 
 ### Backend Patterns
 

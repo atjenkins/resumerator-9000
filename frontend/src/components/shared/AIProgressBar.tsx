@@ -1,48 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import { Progress, Text, Stack, Box } from "@mantine/core";
+import { useThemeStore } from "../../theme/useThemeStore";
+import { getTheme } from "../../theme/themes";
 
 interface AIProgressBarProps {
   isRunning: boolean;
   operationType: "analyze" | "generate" | "enrich";
   onComplete?: () => void;
 }
-
-const SILLY_MESSAGES = {
-  analyze: [
-    "Reticulating career splines...",
-    "Consulting the resume oracle...",
-    "Cross-referencing buzzwords with the cosmos...",
-    "Calibrating achievement metrics...",
-    "Scanning for dangerously high synergy levels...",
-    "Decrypting your professional potential...",
-    "Asking the AI if it's impressed yet...",
-    "Counting action verbs per paragraph...",
-    "Comparing your skills to a very long spreadsheet...",
-    "Feeding your resume to a very sophisticated hamster wheel...",
-  ],
-  generate: [
-    "Assembling your professional narrative...",
-    "Optimizing bullet point velocity...",
-    "Aligning achievement matrices...",
-    "Polishing professional prose to a fine sheen...",
-    "Teaching the AI to humble-brag on your behalf...",
-    "Converting coffee-fueled effort into metrics...",
-    "Sprinkling in just the right amount of synergy...",
-    "Crafting the perfect amount of buzzword density...",
-    "Convincing the algorithm you're a team player AND a self-starter...",
-    "Translating 'wore many hats' into something more impressive...",
-  ],
-  enrich: [
-    "Absorbing your professional essence...",
-    "Cataloging years of hard-won experience...",
-    "Teaching the AI about your career journey...",
-    "Converting your achievements into structured data...",
-    "Parsing decades of hustle...",
-    "Indexing your professional awesomeness...",
-    "Untangling your career spaghetti into something beautiful...",
-    "Filing your skills in alphabetical order... just kidding...",
-  ],
-};
 
 export function AIProgressBar({
   isRunning,
@@ -54,8 +19,21 @@ export function AIProgressBar({
   const [currentMessage, setCurrentMessage] = useState("");
   const messageIndexRef = useRef(0);
   const elapsedSecondsRef = useRef(0);
+  const shuffledMessagesRef = useRef<string[]>([]);
 
-  const messages = SILLY_MESSAGES[operationType];
+  const themeId = useThemeStore((s) => s.themeId);
+  const appTheme = getTheme(themeId);
+  const messages = appTheme.sillyMessages[operationType];
+
+  // Fisher-Yates shuffle algorithm
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
 
   useEffect(() => {
     if (!isRunning) {
@@ -74,7 +52,10 @@ export function AIProgressBar({
     setElapsedSeconds(0);
     elapsedSecondsRef.current = 0;
     messageIndexRef.current = 0;
-    setCurrentMessage(messages[0]);
+    
+    // Shuffle messages for random order
+    shuffledMessagesRef.current = shuffleArray(messages);
+    setCurrentMessage(shuffledMessagesRef.current[0]);
 
     // Progress curve:
     // 0-5s: 0-30%
@@ -115,8 +96,8 @@ export function AIProgressBar({
 
     // Rotate messages every 3-4 seconds
     const messageInterval = setInterval(() => {
-      messageIndexRef.current = (messageIndexRef.current + 1) % messages.length;
-      setCurrentMessage(messages[messageIndexRef.current]);
+      messageIndexRef.current = (messageIndexRef.current + 1) % shuffledMessagesRef.current.length;
+      setCurrentMessage(shuffledMessagesRef.current[messageIndexRef.current]);
     }, 3500);
 
     return () => {
