@@ -53,6 +53,7 @@ export function AIProgressBar({
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [currentMessage, setCurrentMessage] = useState("");
   const messageIndexRef = useRef(0);
+  const elapsedSecondsRef = useRef(0);
 
   const messages = SILLY_MESSAGES[operationType];
 
@@ -71,6 +72,7 @@ export function AIProgressBar({
     // Reset when starting
     setProgress(0);
     setElapsedSeconds(0);
+    elapsedSecondsRef.current = 0;
     messageIndexRef.current = 0;
     setCurrentMessage(messages[0]);
 
@@ -85,7 +87,7 @@ export function AIProgressBar({
       setProgress((prev) => {
         if (!isRunning) return prev;
 
-        const elapsed = elapsedSeconds;
+        const elapsed = elapsedSecondsRef.current;
 
         if (elapsed < 5) {
           // 0-30% quickly
@@ -107,7 +109,8 @@ export function AIProgressBar({
     }, 1000);
 
     const elapsedInterval = setInterval(() => {
-      setElapsedSeconds((prev) => prev + 1);
+      elapsedSecondsRef.current += 1;
+      setElapsedSeconds(elapsedSecondsRef.current);
     }, 1000);
 
     // Rotate messages every 3-4 seconds
@@ -121,7 +124,7 @@ export function AIProgressBar({
       clearInterval(elapsedInterval);
       clearInterval(messageInterval);
     };
-  }, [isRunning, messages, onComplete, elapsedSeconds]);
+  }, [isRunning, messages, onComplete]);
 
   if (!isRunning && progress === 0) {
     return null;
