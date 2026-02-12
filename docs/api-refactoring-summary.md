@@ -79,6 +79,13 @@ backend/src/
 - `DELETE /:id` - Delete analysis
 - `GET /stats/summary` - Get user statistics
 
+### Export Routes (`/api/export`)
+
+- `GET /profile?format=markdown|pdf|docx` - Export current user's profile
+- `GET /:entityType/:entityId?format=markdown|pdf|docx` - Export resume, company, or job by ID
+- All responses are file downloads with appropriate `Content-Type` and `Content-Disposition`
+- Export actions are logged to the activity log
+
 ---
 
 ## Key Features

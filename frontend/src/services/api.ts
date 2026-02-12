@@ -117,6 +117,57 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   return response.json();
 }
 
+// Fetch binary response and trigger file download
+async function fetchBlob(url: string, filename: string): Promise<void> {
+  const authHeaders = await getAuthHeaders();
+  const fullUrl = url.startsWith("http") ? url : API_BASE + url;
+  const response = await fetch(fullUrl, { headers: authHeaders });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ error: response.statusText }));
+    throw new Error((error as { error?: string }).error || "Request failed");
+  }
+
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = objectUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(objectUrl);
+}
+
+// ============================================================
+// Export API
+// ============================================================
+
+export async function exportProfile(format: string): Promise<void> {
+  const name = "profile";
+  const ext = format === "markdown" ? "md" : format === "pdf" ? "pdf" : "docx";
+  await fetchBlob(
+    `/api/export/profile?format=${encodeURIComponent(format)}`,
+    `${name}.${ext}`
+  );
+}
+
+export async function exportEntity(
+  entityType: string,
+  entityId: string,
+  format: string,
+  entityName: string
+): Promise<void> {
+  const safeName = entityName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80) || entityType;
+  const ext = format === "markdown" ? "md" : format === "pdf" ? "pdf" : "docx";
+  await fetchBlob(
+    `/api/export/${encodeURIComponent(entityType)}/${encodeURIComponent(entityId)}?format=${encodeURIComponent(format)}`,
+    `${safeName}.${ext}`
+  );
+}
+
 // ============================================================
 // Profile API
 // ============================================================

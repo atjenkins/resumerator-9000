@@ -14,6 +14,7 @@ import jobsRoutes from "../routes/jobs.routes";
 import analysesRoutes from "../routes/analyses.routes";
 import activityRoutes from "../routes/activity.routes";
 import aiRoutes from "../routes/ai.routes";
+import exportRoutes from "../routes/export.routes";
 
 // Import middleware
 import { errorMiddleware } from "../middleware/error.middleware";
@@ -72,6 +73,7 @@ app.use("/api/jobs", jobsRoutes);
 app.use("/api/analyses", analysesRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/export", exportRoutes);
 
 // ============================================================
 // Health & Info Routes
@@ -100,6 +102,7 @@ app.get("/", (_req, res) => {
       analyses: "/api/analyses",
       activity: "/api/activity",
       ai: "/api/ai",
+      export: "/api/export",
       health: "/health",
     },
     documentation: {
@@ -110,6 +113,7 @@ app.get("/", (_req, res) => {
       analyses: "First-class analysis entities (queryable results)",
       activity: "Activity log (audit trail of all operations)",
       ai: "Unified AI operations (analyze, generate)",
+      export: "Export profile/resume/company/job as markdown, PDF, or DOCX",
     },
   });
 });

@@ -5,7 +5,6 @@ import {
   Card,
   Button,
   Group,
-  FileButton,
   Text,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
@@ -14,6 +13,8 @@ import { notifications } from "@mantine/notifications";
 import { useAuth } from "../contexts/AuthContext";
 import { MarkdownEditor } from "../components/shared/MarkdownEditor";
 import { AIProgressBar } from "../components/shared/AIProgressBar";
+import { UploadResumeModal } from "../components/shared/UploadResumeModal";
+import { ExportMenu } from "../components/shared/ExportMenu";
 import {
   getProfile,
   updateProfile,
@@ -28,6 +29,7 @@ export function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [enriching, setEnriching] = useState(false);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -110,22 +112,30 @@ export function ProfilePage() {
     <Stack gap="xl">
       <Group justify="space-between">
         <Title order={1}>Profile</Title>
-        <FileButton
-          onChange={handleFileUpload}
-          accept="application/pdf,.pdf,.docx"
-        >
-          {(props) => (
-            <Button
-              {...props}
-              leftSection={<IconUpload size={16} />}
-              loading={enriching}
-              disabled={enriching}
-            >
-              Upload Resume to Enrich
-            </Button>
-          )}
-        </FileButton>
+        <Group>
+          <ExportMenu
+            entityType="profile"
+            entityName={profile?.display_name || "profile"}
+          />
+          <Button
+            leftSection={<IconUpload size={16} />}
+            loading={enriching}
+            disabled={enriching}
+            onClick={() => setUploadModalOpen(true)}
+          >
+            Upload Resume to Enrich
+          </Button>
+        </Group>
       </Group>
+
+      <UploadResumeModal
+        opened={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        onUpload={handleFileUpload}
+        title="Upload Resume to Enrich Profile"
+        description="Upload a PDF or DOCX resume. It will be parsed using AI and merged into your profile as your source of truth."
+        loading={enriching}
+      />
 
       {enriching && (
         <Card shadow="sm" padding={isMobile ? "md" : "lg"}>

@@ -2,7 +2,6 @@ import {
   NavLink,
   Divider,
   Text,
-  Group,
   ActionIcon,
   Menu,
   Avatar,

@@ -66,7 +66,9 @@
 - **@anthropic-ai/sdk** - Claude API integration
 - **pdf-parse** - PDF document parsing
 - **mammoth** - DOCX document parsing
-- **marked** - Markdown processing
+- **marked** - Markdown processing (and HTML for PDF export)
+- **docx** - DOCX document generation (export profile/resume/company/job as Word)
+- **puppeteer** - Headless Chrome for PDF export (markdown → HTML → PDF)
 
 ### API & Middleware
 

@@ -19,6 +19,7 @@
     "@supabase/supabase-js": "^2.94.1",
     "commander": "^12.1.0",
     "cors": "^2.8.6",
+    "docx": "^9.5.1",
     "dotenv": "^16.4.7",
     "express": "^5.2.1",
     "mammoth": "^1.8.0",

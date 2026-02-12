@@ -17,6 +17,7 @@ import { notifications } from "@mantine/notifications";
 import { MarkdownEditor } from "../components/shared/MarkdownEditor";
 import { CompanyCard } from "../components/shared/CompanyCard";
 import { ResumeCard } from "../components/shared/ResumeCard";
+import { ExportMenu } from "../components/shared/ExportMenu";
 import { getJob, updateJob, deleteJob, getCompanies, getResumes, type Resume } from "../services/api";
 
 interface JobDetailPageProps {
@@ -223,6 +224,11 @@ export function JobDetailPage({ onNavigate, jobId }: JobDetailPageProps) {
             >
               Save Changes
             </Button>
+            <ExportMenu
+              entityType="job"
+              entityId={jobId}
+              entityName={title}
+            />
             <Button
               color="red"
               variant="light"

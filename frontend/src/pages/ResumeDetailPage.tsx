@@ -19,6 +19,7 @@ import { MarkdownEditor } from "../components/shared/MarkdownEditor";
 import { JobCard } from "../components/shared/JobCard";
 import { CompanyCard } from "../components/shared/CompanyCard";
 import { AnalysisCard } from "../components/shared/AnalysisCard";
+import { ExportMenu } from "../components/shared/ExportMenu";
 import {
   getResume,
   updateResume,
@@ -268,17 +269,22 @@ export function ResumeDetailPage({
             >
               Save Changes
             </Button>
+            <ExportMenu
+              entityType="resume"
+              entityId={resumeId}
+              entityName={title}
+            />
             <Button
               color="red"
               variant="light"
               leftSection={<IconTrash size={16} />}
               onClick={handleDelete}
               loading={deleting}
-            disabled={saving}
-          >
-            Delete
-          </Button>
-        </Group>
+              disabled={saving}
+            >
+              Delete
+            </Button>
+          </Group>
       </Group>
       )}
 

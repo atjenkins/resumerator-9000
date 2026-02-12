@@ -9,12 +9,12 @@ import {
   Grid,
   Modal,
   TextInput,
-  FileButton,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { IconPlus, IconUpload } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { ResumeCard } from "../components/shared/ResumeCard";
+import { UploadResumeModal } from "../components/shared/UploadResumeModal";
 import {
   getResumes,
   createResume,
@@ -45,6 +45,7 @@ export function ResumesPage({ onNavigate }: ResumesPageProps) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [creating, setCreating] = useState(false);
 
@@ -168,20 +169,13 @@ export function ResumesPage({ onNavigate }: ResumesPageProps) {
       <Group justify="space-between">
         <Title order={1}>Resumes</Title>
         <Group>
-          <FileButton
-            onChange={handleUploadResume}
-            accept="application/pdf,.pdf,.docx"
+          <Button
+            leftSection={<IconUpload size={16} />}
+            variant="light"
+            onClick={() => setUploadModalOpen(true)}
           >
-            {(props) => (
-              <Button
-                {...props}
-                leftSection={<IconUpload size={16} />}
-                variant="light"
-              >
-                Upload Resume
-              </Button>
-            )}
-          </FileButton>
+            Upload Resume
+          </Button>
           <Button
             leftSection={<IconPlus size={16} />}
             onClick={() => setCreateModalOpen(true)}
@@ -213,6 +207,14 @@ export function ResumesPage({ onNavigate }: ResumesPageProps) {
           ))}
         </Grid>
       )}
+
+      <UploadResumeModal
+        opened={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        onUpload={handleUploadResume}
+        title="Upload Resume"
+        description="Upload a PDF or DOCX resume. It will be parsed using AI and saved as a new resume in your collection."
+      />
 
       <Modal
         opened={createModalOpen}
