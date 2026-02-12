@@ -239,9 +239,9 @@ export function MarkdownEditor({
           <Box
             style={{
               flex: 1,
-              overflow: "auto",
               border: "1px solid #dee2e6",
               borderRadius: "4px",
+              display: "flex",
             }}
           >
             <Textarea
@@ -254,9 +254,9 @@ export function MarkdownEditor({
                   fontFamily: "monospace",
                   fontSize: "14px",
                   border: "none",
-                  minHeight: height,
+                  height: "100%",
                 },
-                root: { height: "100%" },
+                root: { height: "100%", flex: 1 },
                 wrapper: { height: "100%" },
               }}
             />
