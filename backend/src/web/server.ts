@@ -12,6 +12,7 @@ import resumesRoutes from "../routes/resumes.routes";
 import companiesRoutes from "../routes/companies.routes";
 import jobsRoutes from "../routes/jobs.routes";
 import analysesRoutes from "../routes/analyses.routes";
+import aiRoutes from "../routes/ai.routes";
 
 // Import middleware
 import { errorMiddleware } from "../middleware/error.middleware";
@@ -68,6 +69,7 @@ app.use("/api/resumes", resumesRoutes);
 app.use("/api/companies", companiesRoutes);
 app.use("/api/jobs", jobsRoutes);
 app.use("/api/analyses", analysesRoutes);
+app.use("/api/ai", aiRoutes);
 
 // ============================================================
 // Health & Info Routes
@@ -94,6 +96,7 @@ app.get("/", (_req, res) => {
       companies: "/api/companies",
       jobs: "/api/jobs",
       analyses: "/api/analyses",
+      ai: "/api/ai",
       health: "/health",
     },
     documentation: {
@@ -102,6 +105,7 @@ app.get("/", (_req, res) => {
       companies: "Company CRUD + AI parsing",
       jobs: "Job CRUD + AI parsing",
       analyses: "Historical analysis results",
+      ai: "Unified AI operations (analyze, generate)",
     },
   });
 });

@@ -3,16 +3,16 @@ import {
   Title,
   Stack,
   TextInput,
-  Textarea,
   Button,
   Group,
   Card,
   Text,
   Loader,
 } from "@mantine/core";
-import { IconArrowLeft, IconDeviceFloppy } from "@tabler/icons-react";
+import { IconArrowLeft, IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
-import { getCompany, updateCompany } from "../services/api";
+import { MarkdownEditor } from "../components/shared/MarkdownEditor";
+import { getCompany, updateCompany, deleteCompany } from "../services/api";
 
 interface CompanyDetailPageProps {
   onNavigate: (page: string) => void;
@@ -35,6 +35,7 @@ export function CompanyDetailPage({
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
@@ -83,6 +84,30 @@ export function CompanyDetailPage({
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this company? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      await deleteCompany(companyId);
+      notifications.show({
+        title: "Success",
+        message: "Company deleted",
+        color: "green",
+      });
+      onNavigate("companies");
+    } catch (error) {
+      notifications.show({
+        title: "Error",
+        message: "Failed to delete company",
+        color: "red",
+      });
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <Stack align="center" justify="center" h="50vh">
@@ -116,13 +141,26 @@ export function CompanyDetailPage({
           </Button>
           <Title order={1}>Edit Company</Title>
         </Group>
-        <Button
-          leftSection={<IconDeviceFloppy size={16} />}
-          onClick={handleSave}
-          loading={saving}
-        >
-          Save Changes
-        </Button>
+        <Group>
+          <Button
+            leftSection={<IconDeviceFloppy size={16} />}
+            onClick={handleSave}
+            loading={saving}
+            disabled={deleting}
+          >
+            Save Changes
+          </Button>
+          <Button
+            color="red"
+            variant="light"
+            leftSection={<IconTrash size={16} />}
+            onClick={handleDelete}
+            loading={deleting}
+            disabled={saving}
+          >
+            Delete
+          </Button>
+        </Group>
       </Group>
 
       <Card shadow="sm" padding="lg">
@@ -134,14 +172,28 @@ export function CompanyDetailPage({
             required
           />
 
-          <Textarea
-            label="Company Information (Markdown)"
-            description="Add details about the company, culture, values, etc."
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            minRows={20}
-            styles={{ input: { fontFamily: "monospace", fontSize: "13px" } }}
-          />
+          <div>
+            <Text fw={500} size="sm" mb="xs">
+              Company Information (Markdown)
+            </Text>
+            <Text size="xs" c="dimmed" mb="md">
+              Add details about the company, culture, values, etc.
+            </Text>
+            <MarkdownEditor
+              value={content}
+              onChange={setContent}
+              onSave={handleSave}
+              saving={saving}
+              placeholder="# Company Name
+
+## About
+
+## Culture
+
+## Values
+"
+            />
+          </div>
         </Stack>
       </Card>
 

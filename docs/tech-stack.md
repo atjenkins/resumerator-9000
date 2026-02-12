@@ -28,7 +28,23 @@
 ### Data & API
 
 - **Supabase JS Client** - Authentication only
-- **Marked** - Markdown parsing/rendering
+- **Marked v11** - Markdown parsing/rendering
+  - Used in MarkdownEditor for live preview
+  - Powers preview mode in all markdown editing interfaces
+
+### Key Components
+
+- **MarkdownEditor** - Full-featured markdown editor with:
+  - Three view modes: Edit, Preview, Split
+  - Formatting toolbar (headings, bold, italic, lists, links, code blocks)
+  - Fixed-height scrollable container for better UX
+  - Live preview with `TypographyStylesProvider`
+  
+- **AIProgressBar** - Progress indicator for long-running AI operations:
+  - Curved progress animation (0-30% quick, 30-60% moderate, 60-95% slow)
+  - Rotating humorous status messages
+  - Real-time elapsed time display
+  - Adaptive to operation type (analyze, generate, enrich)
 
 ### Development Tools
 
@@ -203,6 +219,7 @@ NODE_ENV=development
   "mammoth": "^1.8.0",
   "marked": "^17.0.1",
   "multer": "^1.4.5-lts.1",
+  "cors": "^2.8.6",
   "ts-node": "^10.9.2",
   "typescript": "^5.7.3"
 }
@@ -219,13 +236,35 @@ NODE_ENV=development
 - **Service layer** - API abstraction
 - **Store pattern** - Centralized state with Zustand
 - **Query pattern** - Server state with React Query
+- **Page-based routing** - State-based navigation with App.tsx router
+- **Shared components** - Reusable UI components (MarkdownEditor, AIProgressBar, LoadingSpinner)
 
 ### Backend Patterns
 
 - **MVC-like structure** - Routes, agents (controllers), models (to be added)
 - **Middleware pattern** - Auth, error handling, logging
-- **Agent pattern** - Specialized AI agents for different tasks
+- **Agent pattern** - Specialized AI agents for different tasks (JobFitAgent, GeneralResumeAgent, ResumeBuilderAgent)
 - **Parser abstraction** - Unified interface for different file types
+- **Duration tracking** - All AI operations track and store `duration_ms` in metadata
+
+### API Endpoints
+
+#### Core Resources
+- `/api/profile` - User profile management
+- `/api/resumes` - Resume CRUD + legacy AI operations
+- `/api/companies` - Company CRUD + parsing
+- `/api/jobs` - Job CRUD + parsing
+- `/api/analyses` - Historical analysis results
+
+#### AI Operations (New)
+- `/api/ai/analyze` - Unified analysis endpoint
+  - Accepts `source: 'resume' | 'profile'`
+  - Optional job/company context
+  - Returns analysis with duration tracking
+- `/api/ai/generate` - Unified generation endpoint
+  - Accepts `source: 'resume' | 'profile'`
+  - Requires job ID for tailoring
+  - Creates new resume automatically if `save: true`
 
 ---
 

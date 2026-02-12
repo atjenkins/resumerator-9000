@@ -281,3 +281,35 @@ export async function getAnalyses(filters?: {
 export async function getAnalysis(id: string) {
   return fetchJson(`/api/analyses/${id}`, { method: "GET" });
 }
+
+// ============================================================
+// AI Operations API
+// ============================================================
+
+export async function analyzeDocument(data: {
+  source: "resume" | "profile";
+  resumeId?: string;
+  companyId?: string;
+  jobId?: string;
+  save?: boolean;
+}) {
+  return fetchJson("/api/ai/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function generateResume(data: {
+  source: "resume" | "profile";
+  resumeId?: string;
+  jobId: string;
+  companyId?: string;
+  save?: boolean;
+}) {
+  return fetchJson("/api/ai/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}

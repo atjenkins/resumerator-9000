@@ -3,7 +3,6 @@ import {
   Title,
   Stack,
   TextInput,
-  Textarea,
   Button,
   Group,
   Card,
@@ -12,15 +11,15 @@ import {
   Loader,
   Badge,
 } from "@mantine/core";
-import { IconArrowLeft, IconDeviceFloppy } from "@tabler/icons-react";
+import { IconArrowLeft, IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
+import { MarkdownEditor } from "../components/shared/MarkdownEditor";
 import {
   getResume,
   updateResume,
+  deleteResume,
   getCompanies,
   getJobs,
-  analyzeResume,
-  tailorResume,
 } from "../services/api";
 
 interface ResumeDetailPageProps {
@@ -56,8 +55,7 @@ export function ResumeDetailPage({
   const [resume, setResume] = useState<Resume | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [tailoring, setTailoring] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -138,62 +136,27 @@ export function ResumeDetailPage({
     }
   };
 
-  const handleAnalyze = async () => {
-    try {
-      setAnalyzing(true);
-      const result = await analyzeResume(resumeId, {
-        companyId: companyId || undefined,
-        jobId: jobId || undefined,
-        save: true,
-      });
-      notifications.show({
-        title: "Analysis Complete",
-        message: "Resume analyzed successfully",
-        color: "green",
-      });
-      console.log("Analysis result:", result);
-    } catch (error) {
-      notifications.show({
-        title: "Error",
-        message: "Failed to analyze resume",
-        color: "red",
-      });
-    } finally {
-      setAnalyzing(false);
-    }
-  };
-
-  const handleTailor = async () => {
-    if (!jobId) {
-      notifications.show({
-        title: "Error",
-        message: "Please select a job to tailor this resume for",
-        color: "orange",
-      });
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this resume? This action cannot be undone.")) {
       return;
     }
 
     try {
-      setTailoring(true);
-      const result = await tailorResume(resumeId, {
-        jobId,
-        save: true,
-      });
+      setDeleting(true);
+      await deleteResume(resumeId);
       notifications.show({
-        title: "Tailoring Complete",
-        message: "Tailored resume created",
+        title: "Success",
+        message: "Resume deleted",
         color: "green",
       });
-      console.log("Tailor result:", result);
       onNavigate("resumes");
     } catch (error) {
       notifications.show({
         title: "Error",
-        message: "Failed to tailor resume",
+        message: "Failed to delete resume",
         color: "red",
       });
-    } finally {
-      setTailoring(false);
+      setDeleting(false);
     }
   };
 
@@ -229,13 +192,26 @@ export function ResumeDetailPage({
           <Title order={1}>Edit Resume</Title>
           {resume.is_primary && <Badge color="yellow">Primary</Badge>}
         </Group>
-        <Button
-          leftSection={<IconDeviceFloppy size={16} />}
-          onClick={handleSave}
-          loading={saving}
-        >
-          Save Changes
-        </Button>
+        <Group>
+          <Button
+            leftSection={<IconDeviceFloppy size={16} />}
+            onClick={handleSave}
+            loading={saving}
+            disabled={deleting}
+          >
+            Save Changes
+          </Button>
+          <Button
+            color="red"
+            variant="light"
+            leftSection={<IconTrash size={16} />}
+            onClick={handleDelete}
+            loading={deleting}
+            disabled={saving}
+          >
+            Delete
+          </Button>
+        </Group>
       </Group>
 
       <Card shadow="sm" padding="lg">
@@ -271,12 +247,22 @@ export function ResumeDetailPage({
             clearable
           />
 
-          <Textarea
-            label="Resume Content (Markdown)"
+          <Text fw={500} size="sm" mb="xs">
+            Resume Content (Markdown)
+          </Text>
+          <MarkdownEditor
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            minRows={20}
-            styles={{ input: { fontFamily: "monospace", fontSize: "13px" } }}
+            onChange={setContent}
+            onSave={handleSave}
+            saving={saving}
+            placeholder="# Resume
+
+## Experience
+
+## Education
+
+## Skills
+"
           />
         </Stack>
       </Card>
@@ -285,29 +271,23 @@ export function ResumeDetailPage({
         <Title order={3} mb="md">
           AI Operations
         </Title>
+        <Text size="sm" c="dimmed" mb="md">
+          Use AI to analyze or generate a tailored version of this resume
+        </Text>
         <Group>
           <Button
-            variant="light"
-            onClick={handleAnalyze}
-            loading={analyzing}
-            disabled={saving}
+            variant="outline"
+            onClick={() => onNavigate("analyze", { resumeId })}
           >
-            Analyze Resume
+            Analyze this Resume
           </Button>
           <Button
-            variant="light"
-            onClick={handleTailor}
-            loading={tailoring}
-            disabled={saving || !jobId}
+            variant="outline"
+            onClick={() => onNavigate("generate", { resumeId })}
           >
-            Tailor for Job
+            Generate from this Resume
           </Button>
         </Group>
-        <Text size="xs" c="dimmed" mt="sm">
-          {jobId
-            ? "Analysis and tailoring will use the selected job and company context."
-            : "Select a job to enable tailoring."}
-        </Text>
       </Card>
 
       <Text size="xs" c="dimmed">

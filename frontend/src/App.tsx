@@ -10,6 +10,8 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { ResumesPage } from "./pages/ResumesPage";
 import { CompaniesPage } from "./pages/CompaniesPage";
 import { JobsPage } from "./pages/JobsPage";
+import { AnalyzePage } from "./pages/AnalyzePage";
+import { GeneratePage } from "./pages/GeneratePage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { ResumeDetailPage } from "./pages/ResumeDetailPage";
 import { CompanyDetailPage } from "./pages/CompanyDetailPage";
@@ -62,6 +64,20 @@ function AuthenticatedApp() {
           <JobDetailPage onNavigate={handleNavigate} jobId={pageState.id} />
         ) : (
           <DashboardPage onNavigate={handleNavigate} />
+        );
+      case "analyze":
+        return (
+          <AnalyzePage
+            onNavigate={handleNavigate}
+            preSelectedResumeId={pageState?.resumeId}
+          />
+        );
+      case "generate":
+        return (
+          <GeneratePage
+            onNavigate={handleNavigate}
+            preSelectedResumeId={pageState?.resumeId}
+          />
         );
       case "history":
         return <HistoryPage />;

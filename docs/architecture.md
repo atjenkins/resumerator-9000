@@ -138,40 +138,98 @@ resumerator-9000/
 ├── frontend/                      # Vite React app
 │   ├── src/
 │   │   ├── components/           # React components
-│   │   ├── hooks/                # Custom hooks
+│   │   │   ├── auth/            # Login, SignUp
+│   │   │   ├── layout/          # Header, Sidebar, MainLayout
+│   │   │   └── shared/          # MarkdownEditor, AIProgressBar, LoadingSpinner
+│   │   ├── pages/               # Page components
+│   │   │   ├── DashboardPage.tsx
+│   │   │   ├── ProfilePage.tsx
+│   │   │   ├── ResumesPage.tsx
+│   │   │   ├── ResumeDetailPage.tsx
+│   │   │   ├── CompaniesPage.tsx
+│   │   │   ├── CompanyDetailPage.tsx
+│   │   │   ├── JobsPage.tsx
+│   │   │   ├── JobDetailPage.tsx
+│   │   │   ├── AnalyzePage.tsx       # NEW: Unified analysis
+│   │   │   ├── GeneratePage.tsx      # NEW: Unified generation
+│   │   │   └── HistoryPage.tsx
+│   │   ├── contexts/            # React contexts
 │   │   ├── services/
-│   │   │   ├── api.ts           # React Query hooks
+│   │   │   ├── api.ts           # API client with all endpoints
 │   │   │   └── supabase.ts      # Supabase client
-│   │   ├── store/               # Zustand state
 │   │   └── theme/               # Mantine theme
 │   ├── package.json
 │   └── vite.config.ts
 ├── backend/                       # Express API
 │   ├── src/
 │   │   ├── agents/              # AI agents
+│   │   │   ├── base-agent.ts
+│   │   │   ├── general-agent.ts
+│   │   │   ├── job-fit-agent.ts
+│   │   │   ├── builder-agent.ts
+│   │   │   └── import-agent.ts
 │   │   ├── parsers/             # PDF/DOCX parsers
-│   │   ├── middleware/          # Auth, CORS
+│   │   ├── middleware/          # Auth, CORS, error handling
 │   │   ├── routes/              # API endpoints
-│   │   └── server.ts
+│   │   │   ├── profile.routes.ts
+│   │   │   ├── resumes.routes.ts
+│   │   │   ├── companies.routes.ts
+│   │   │   ├── jobs.routes.ts
+│   │   │   ├── analyses.routes.ts
+│   │   │   └── ai.routes.ts     # NEW: Unified AI operations
+│   │   ├── services/
+│   │   │   └── supabase.service.ts
+│   │   └── web/
+│   │       └── server.ts
 │   ├── package.json
 │   └── tsconfig.json
 ├── docs/                         # Documentation
 │   ├── architecture.md          # This file
-│   └── tech-stack.md            # Tech stack details
+│   ├── tech-stack.md            # Tech stack details
+│   └── plans/                   # Implementation plans
+│       └── ui-overhaul-plan.md
 └── resume-data/                 # Legacy data files
 ```
 
+## Frontend Pages & Navigation
+
+### Sidebar Navigation
+
+- **Dashboard** - Overview with statistics and quick actions
+- **Profile** - Comprehensive professional profile (markdown)
+- **Resumes** - List all resumes with metadata (clickable cards)
+- **Companies** - Company research notes (clickable cards)
+- **Jobs** - Job descriptions (clickable cards)
+- **Analyze** (NEW) - AI analysis of resumes/profile with optional job/company context
+- **Generate** (NEW) - AI-powered tailored resume generation
+- **History** - Past AI operations with duration tracking
+
+### Routing Architecture
+
+- **State-based routing** via App.tsx (no URL routing)
+- Navigation handled by `onNavigate(page, state?)` callbacks
+- Page state passes IDs and pre-selected values between pages
+- Detail pages support pre-selection for deep linking from other pages
+
+### Key UX Features
+
+- **Clickable cards** on list pages (removed separate Edit/Delete buttons)
+- **Delete moved to detail pages** (top action bar alongside Save)
+- **Rich metadata** on cards (company names, job titles, timestamps with time)
+- **Progress indicators** for AI operations (estimated progress + silly messages)
+- **Markdown editor** with Edit/Preview/Split modes and formatting toolbar
+
 ## Data Storage Strategy
 
-**Current:** File-based markdown in `resume-data/`
-**Target:** Markdown content stored in Supabase PostgreSQL
+**Current:** Database-first with Supabase PostgreSQL
+**Format:** Markdown content stored as TEXT fields
 
-**Migration Path:**
+**Storage Details:**
 
-- Keep markdown editing workflow
-- Store markdown as TEXT in database
+- All content stored as markdown in database TEXT fields
 - Preserve human-readable format
-- Enable multi-user support
+- Multi-user support with RLS
+- Duration tracking for AI operations in JSONB metadata
 
 ## Deployment
 

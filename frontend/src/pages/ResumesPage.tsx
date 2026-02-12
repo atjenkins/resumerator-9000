@@ -12,19 +12,14 @@ import {
   TextInput,
   FileButton,
 } from "@mantine/core";
-import {
-  IconPlus,
-  IconUpload,
-  IconEdit,
-  IconTrash,
-  IconStar,
-} from "@tabler/icons-react";
+import { IconPlus, IconUpload, IconStar } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import {
   getResumes,
   createResume,
-  deleteResume,
   parseResume,
+  getCompanies,
+  getJobs,
 } from "../services/api";
 
 interface Resume {
@@ -35,6 +30,17 @@ interface Resume {
   company_id?: string;
   job_id?: string;
   created_at: string;
+  updated_at: string;
+}
+
+interface Company {
+  id: string;
+  name: string;
+}
+
+interface Job {
+  id: string;
+  title: string;
 }
 
 interface ResumesPageProps {
@@ -43,6 +49,8 @@ interface ResumesPageProps {
 
 export function ResumesPage({ onNavigate }: ResumesPageProps) {
   const [resumes, setResumes] = useState<Resume[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -50,6 +58,8 @@ export function ResumesPage({ onNavigate }: ResumesPageProps) {
 
   useEffect(() => {
     loadResumes();
+    loadCompanies();
+    loadJobs();
   }, []);
 
   const loadResumes = async () => {
@@ -65,6 +75,24 @@ export function ResumesPage({ onNavigate }: ResumesPageProps) {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCompanies = async () => {
+    try {
+      const data = await getCompanies();
+      setCompanies(data as Company[]);
+    } catch (error) {
+      console.error("Failed to load companies", error);
+    }
+  };
+
+  const loadJobs = async () => {
+    try {
+      const data = await getJobs();
+      setJobs(data as Job[]);
+    } catch (error) {
+      console.error("Failed to load jobs", error);
     }
   };
 
@@ -129,24 +157,14 @@ export function ResumesPage({ onNavigate }: ResumesPageProps) {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this resume?")) return;
+  const getCompanyName = (companyId?: string) => {
+    if (!companyId) return null;
+    return companies.find((c) => c.id === companyId)?.name;
+  };
 
-    try {
-      await deleteResume(id);
-      await loadResumes();
-      notifications.show({
-        title: "Success",
-        message: "Resume deleted",
-        color: "green",
-      });
-    } catch (error) {
-      notifications.show({
-        title: "Error",
-        message: "Failed to delete resume",
-        color: "red",
-      });
-    }
+  const getJobTitle = (jobId?: string) => {
+    if (!jobId) return null;
+    return jobs.find((j) => j.id === jobId)?.title;
   };
 
   if (loading) {
@@ -190,51 +208,78 @@ export function ResumesPage({ onNavigate }: ResumesPageProps) {
         </Card>
       ) : (
         <Grid>
-          {resumes.map((resume) => (
-            <Grid.Col key={resume.id} span={{ base: 12, md: 6, lg: 4 }}>
-              <Card shadow="sm" padding="lg" style={{ height: "100%" }}>
-                <Stack gap="sm">
-                  <Group justify="apart">
-                    <Text fw={500}>{resume.title}</Text>
-                    {resume.is_primary && (
-                      <Badge
-                        color="yellow"
-                        leftSection={<IconStar size={12} />}
-                      >
-                        Primary
-                      </Badge>
+          {resumes.map((resume) => {
+            const companyName = getCompanyName(resume.company_id);
+            const jobTitle = getJobTitle(resume.job_id);
+            const createdDate = new Date(resume.created_at);
+            const updatedDate = new Date(resume.updated_at);
+            const showUpdated =
+              updatedDate.getTime() - createdDate.getTime() > 1000;
+
+            return (
+              <Grid.Col key={resume.id} span={{ base: 12, md: 6, lg: 4 }}>
+                <Card
+                  shadow="sm"
+                  padding="lg"
+                  style={{
+                    height: "100%",
+                    cursor: "pointer",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                  }}
+                  onClick={() => onNavigate("resume-detail", { id: resume.id })}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 12px rgba(0, 0, 0, 0.15)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "";
+                  }}
+                >
+                  <Stack gap="sm">
+                    <Group justify="apart">
+                      <Text fw={500}>{resume.title}</Text>
+                      {resume.is_primary && (
+                        <Badge
+                          color="yellow"
+                          leftSection={<IconStar size={12} />}
+                        >
+                          Primary
+                        </Badge>
+                      )}
+                    </Group>
+
+                    {(companyName || jobTitle) && (
+                      <Group gap="xs">
+                        {companyName && (
+                          <Badge variant="light" color="blue" size="sm">
+                            {companyName}
+                          </Badge>
+                        )}
+                        {jobTitle && (
+                          <Badge variant="light" color="grape" size="sm">
+                            {jobTitle}
+                          </Badge>
+                        )}
+                      </Group>
                     )}
-                  </Group>
 
-                  <Text size="xs" c="dimmed">
-                    Created {new Date(resume.created_at).toLocaleDateString()}
-                  </Text>
-
-                  <Group justify="apart" mt="auto">
-                    <Button
-                      size="xs"
-                      variant="light"
-                      leftSection={<IconEdit size={14} />}
-                      onClick={() =>
-                        onNavigate("resume-detail", { id: resume.id })
-                      }
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="xs"
-                      variant="light"
-                      color="red"
-                      leftSection={<IconTrash size={14} />}
-                      onClick={() => handleDelete(resume.id)}
-                    >
-                      Delete
-                    </Button>
-                  </Group>
-                </Stack>
-              </Card>
-            </Grid.Col>
-          ))}
+                    <Stack gap="xs" mt="auto">
+                      <Text size="xs" c="dimmed">
+                        Created: {createdDate.toLocaleString()}
+                      </Text>
+                      {showUpdated && (
+                        <Text size="xs" c="dimmed">
+                          Updated: {updatedDate.toLocaleString()}
+                        </Text>
+                      )}
+                    </Stack>
+                  </Stack>
+                </Card>
+              </Grid.Col>
+            );
+          })}
         </Grid>
       )}
 

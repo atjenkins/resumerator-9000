@@ -12,6 +12,7 @@ import { IconUpload } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { useAuth } from "../contexts/AuthContext";
 import { MarkdownEditor } from "../components/shared/MarkdownEditor";
+import { AIProgressBar } from "../components/shared/AIProgressBar";
 import {
   getProfile,
   updateProfile,
@@ -116,12 +117,19 @@ export function ProfilePage() {
               {...props}
               leftSection={<IconUpload size={16} />}
               loading={enriching}
+              disabled={enriching}
             >
               Upload Resume to Enrich
             </Button>
           )}
         </FileButton>
       </Group>
+
+      {enriching && (
+        <Card shadow="sm" padding="lg">
+          <AIProgressBar isRunning={enriching} operationType="enrich" />
+        </Card>
+      )}
 
       <Card shadow="sm" padding="lg">
         <Text c="dimmed" size="sm" mb="md">

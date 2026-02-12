@@ -5,6 +5,8 @@ import {
   IconFileText,
   IconBriefcase,
   IconClipboard,
+  IconReportAnalytics,
+  IconSparkles,
   IconHistory,
 } from "@tabler/icons-react";
 
@@ -20,6 +22,8 @@ export function Sidebar({ activePage, onNavigate }: SidebarProps) {
     { value: "resumes", label: "Resumes", icon: IconFileText },
     { value: "companies", label: "Companies", icon: IconBriefcase },
     { value: "jobs", label: "Jobs", icon: IconClipboard },
+    { value: "analyze", label: "Analyze", icon: IconReportAnalytics },
+    { value: "generate", label: "Generate", icon: IconSparkles },
     { value: "history", label: "History", icon: IconHistory },
   ];
 

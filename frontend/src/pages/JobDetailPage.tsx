@@ -3,7 +3,6 @@ import {
   Title,
   Stack,
   TextInput,
-  Textarea,
   Button,
   Group,
   Card,
@@ -11,9 +10,10 @@ import {
   Select,
   Loader,
 } from "@mantine/core";
-import { IconArrowLeft, IconDeviceFloppy } from "@tabler/icons-react";
+import { IconArrowLeft, IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
-import { getJob, updateJob, getCompanies } from "../services/api";
+import { MarkdownEditor } from "../components/shared/MarkdownEditor";
+import { getJob, updateJob, deleteJob, getCompanies } from "../services/api";
 
 interface JobDetailPageProps {
   onNavigate: (page: string) => void;
@@ -39,6 +39,7 @@ export function JobDetailPage({ onNavigate, jobId }: JobDetailPageProps) {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -105,6 +106,30 @@ export function JobDetailPage({ onNavigate, jobId }: JobDetailPageProps) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this job? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      await deleteJob(jobId);
+      notifications.show({
+        title: "Success",
+        message: "Job deleted",
+        color: "green",
+      });
+      onNavigate("jobs");
+    } catch (error) {
+      notifications.show({
+        title: "Error",
+        message: "Failed to delete job",
+        color: "red",
+      });
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <Stack align="center" justify="center" h="50vh">
@@ -136,13 +161,26 @@ export function JobDetailPage({ onNavigate, jobId }: JobDetailPageProps) {
           </Button>
           <Title order={1}>Edit Job</Title>
         </Group>
-        <Button
-          leftSection={<IconDeviceFloppy size={16} />}
-          onClick={handleSave}
-          loading={saving}
-        >
-          Save Changes
-        </Button>
+        <Group>
+          <Button
+            leftSection={<IconDeviceFloppy size={16} />}
+            onClick={handleSave}
+            loading={saving}
+            disabled={deleting}
+          >
+            Save Changes
+          </Button>
+          <Button
+            color="red"
+            variant="light"
+            leftSection={<IconTrash size={16} />}
+            onClick={handleDelete}
+            loading={deleting}
+            disabled={saving}
+          >
+            Delete
+          </Button>
+        </Group>
       </Group>
 
       <Card shadow="sm" padding="lg">
@@ -166,14 +204,28 @@ export function JobDetailPage({ onNavigate, jobId }: JobDetailPageProps) {
             clearable
           />
 
-          <Textarea
-            label="Job Description (Markdown)"
-            description="Add the full job description, requirements, qualifications, etc."
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            minRows={20}
-            styles={{ input: { fontFamily: "monospace", fontSize: "13px" } }}
-          />
+          <div>
+            <Text fw={500} size="sm" mb="xs">
+              Job Description (Markdown)
+            </Text>
+            <Text size="xs" c="dimmed" mb="md">
+              Add the full job description, requirements, qualifications, etc.
+            </Text>
+            <MarkdownEditor
+              value={content}
+              onChange={setContent}
+              onSave={handleSave}
+              saving={saving}
+              placeholder="# Job Title
+
+## Description
+
+## Requirements
+
+## Qualifications
+"
+            />
+          </div>
         </Stack>
       </Card>
 

@@ -10,14 +10,9 @@ import {
   Modal,
   TextInput,
 } from "@mantine/core";
-import {
-  IconPlus,
-  IconEdit,
-  IconTrash,
-  IconBriefcase,
-} from "@tabler/icons-react";
+import { IconPlus, IconBriefcase } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
-import { getCompanies, createCompany, deleteCompany } from "../services/api";
+import { getCompanies, createCompany } from "../services/api";
 
 interface Company {
   id: string;
@@ -25,6 +20,7 @@ interface Company {
   slug: string;
   content: string;
   created_at: string;
+  updated_at: string;
 }
 
 interface CompaniesPageProps {
@@ -86,26 +82,6 @@ export function CompaniesPage({ onNavigate }: CompaniesPageProps) {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this company?")) return;
-
-    try {
-      await deleteCompany(id);
-      await loadCompanies();
-      notifications.show({
-        title: "Success",
-        message: "Company deleted",
-        color: "green",
-      });
-    } catch (error) {
-      notifications.show({
-        title: "Error",
-        message: "Failed to delete company",
-        color: "red",
-      });
-    }
-  };
-
   if (loading) {
     return <Text>Loading companies...</Text>;
   }
@@ -130,44 +106,56 @@ export function CompaniesPage({ onNavigate }: CompaniesPageProps) {
         </Card>
       ) : (
         <Grid>
-          {companies.map((company) => (
-            <Grid.Col key={company.id} span={{ base: 12, md: 6, lg: 4 }}>
-              <Card shadow="sm" padding="lg" style={{ height: "100%" }}>
-                <Stack gap="sm">
-                  <Group>
-                    <IconBriefcase size={24} color="gray" />
-                    <Text fw={500}>{company.name}</Text>
-                  </Group>
+          {companies.map((company) => {
+            const createdDate = new Date(company.created_at);
+            const updatedDate = new Date(company.updated_at);
+            const showUpdated =
+              updatedDate.getTime() - createdDate.getTime() > 1000;
 
-                  <Text size="xs" c="dimmed">
-                    Added {new Date(company.created_at).toLocaleDateString()}
-                  </Text>
+            return (
+              <Grid.Col key={company.id} span={{ base: 12, md: 6, lg: 4 }}>
+                <Card
+                  shadow="sm"
+                  padding="lg"
+                  style={{
+                    height: "100%",
+                    cursor: "pointer",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                  }}
+                  onClick={() =>
+                    onNavigate("company-detail", { id: company.id })
+                  }
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 12px rgba(0, 0, 0, 0.15)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "";
+                  }}
+                >
+                  <Stack gap="sm">
+                    <Group>
+                      <IconBriefcase size={24} color="gray" />
+                      <Text fw={500}>{company.name}</Text>
+                    </Group>
 
-                  <Group justify="apart" mt="auto">
-                    <Button
-                      size="xs"
-                      variant="light"
-                      leftSection={<IconEdit size={14} />}
-                      onClick={() =>
-                        onNavigate("company-detail", { id: company.id })
-                      }
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="xs"
-                      variant="light"
-                      color="red"
-                      leftSection={<IconTrash size={14} />}
-                      onClick={() => handleDelete(company.id)}
-                    >
-                      Delete
-                    </Button>
-                  </Group>
-                </Stack>
-              </Card>
-            </Grid.Col>
-          ))}
+                    <Stack gap="xs" mt="auto">
+                      <Text size="xs" c="dimmed">
+                        Created: {createdDate.toLocaleString()}
+                      </Text>
+                      {showUpdated && (
+                        <Text size="xs" c="dimmed">
+                          Updated: {updatedDate.toLocaleString()}
+                        </Text>
+                      )}
+                    </Stack>
+                  </Stack>
+                </Card>
+              </Grid.Col>
+            );
+          })}
         </Grid>
       )}
 

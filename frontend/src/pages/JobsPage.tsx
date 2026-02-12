@@ -11,14 +11,9 @@ import {
   TextInput,
   Badge,
 } from "@mantine/core";
-import {
-  IconPlus,
-  IconEdit,
-  IconTrash,
-  IconClipboard,
-} from "@tabler/icons-react";
+import { IconPlus, IconClipboard } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
-import { getJobs, createJob, deleteJob } from "../services/api";
+import { getJobs, createJob, getCompanies } from "../services/api";
 
 interface Job {
   id: string;
@@ -27,6 +22,12 @@ interface Job {
   content: string;
   company_id?: string;
   created_at: string;
+  updated_at: string;
+}
+
+interface Company {
+  id: string;
+  name: string;
 }
 
 interface JobsPageProps {
@@ -35,6 +36,7 @@ interface JobsPageProps {
 
 export function JobsPage({ onNavigate }: JobsPageProps) {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -42,6 +44,7 @@ export function JobsPage({ onNavigate }: JobsPageProps) {
 
   useEffect(() => {
     loadJobs();
+    loadCompanies();
   }, []);
 
   const loadJobs = async () => {
@@ -57,6 +60,15 @@ export function JobsPage({ onNavigate }: JobsPageProps) {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCompanies = async () => {
+    try {
+      const data = await getCompanies();
+      setCompanies(data as Company[]);
+    } catch (error) {
+      console.error("Failed to load companies", error);
     }
   };
 
@@ -88,24 +100,9 @@ export function JobsPage({ onNavigate }: JobsPageProps) {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this job?")) return;
-
-    try {
-      await deleteJob(id);
-      await loadJobs();
-      notifications.show({
-        title: "Success",
-        message: "Job deleted",
-        color: "green",
-      });
-    } catch (error) {
-      notifications.show({
-        title: "Error",
-        message: "Failed to delete job",
-        color: "red",
-      });
-    }
+  const getCompanyName = (companyId?: string) => {
+    if (!companyId) return null;
+    return companies.find((c) => c.id === companyId)?.name;
   };
 
   if (loading) {
@@ -132,46 +129,61 @@ export function JobsPage({ onNavigate }: JobsPageProps) {
         </Card>
       ) : (
         <Grid>
-          {jobs.map((job) => (
-            <Grid.Col key={job.id} span={{ base: 12, md: 6, lg: 4 }}>
-              <Card shadow="sm" padding="lg" style={{ height: "100%" }}>
-                <Stack gap="sm">
-                  <Group>
-                    <IconClipboard size={24} color="gray" />
-                    <Text fw={500}>{job.title}</Text>
-                  </Group>
+          {jobs.map((job) => {
+            const companyName = getCompanyName(job.company_id);
+            const createdDate = new Date(job.created_at);
+            const updatedDate = new Date(job.updated_at);
+            const showUpdated =
+              updatedDate.getTime() - createdDate.getTime() > 1000;
 
-                  {job.company_id && (
-                    <Badge variant="light">Linked to company</Badge>
-                  )}
+            return (
+              <Grid.Col key={job.id} span={{ base: 12, md: 6, lg: 4 }}>
+                <Card
+                  shadow="sm"
+                  padding="lg"
+                  style={{
+                    height: "100%",
+                    cursor: "pointer",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                  }}
+                  onClick={() => onNavigate("job-detail", { id: job.id })}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 12px rgba(0, 0, 0, 0.15)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "";
+                  }}
+                >
+                  <Stack gap="sm">
+                    <Group>
+                      <IconClipboard size={24} color="gray" />
+                      <Text fw={500}>{job.title}</Text>
+                    </Group>
 
-                  <Text size="xs" c="dimmed">
-                    Added {new Date(job.created_at).toLocaleDateString()}
-                  </Text>
+                    {companyName && (
+                      <Badge variant="light" color="blue" size="sm">
+                        {companyName}
+                      </Badge>
+                    )}
 
-                  <Group justify="apart" mt="auto">
-                    <Button
-                      size="xs"
-                      variant="light"
-                      leftSection={<IconEdit size={14} />}
-                      onClick={() => onNavigate("job-detail", { id: job.id })}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="xs"
-                      variant="light"
-                      color="red"
-                      leftSection={<IconTrash size={14} />}
-                      onClick={() => handleDelete(job.id)}
-                    >
-                      Delete
-                    </Button>
-                  </Group>
-                </Stack>
-              </Card>
-            </Grid.Col>
-          ))}
+                    <Stack gap="xs" mt="auto">
+                      <Text size="xs" c="dimmed">
+                        Created: {createdDate.toLocaleString()}
+                      </Text>
+                      {showUpdated && (
+                        <Text size="xs" c="dimmed">
+                          Updated: {updatedDate.toLocaleString()}
+                        </Text>
+                      )}
+                    </Stack>
+                  </Stack>
+                </Card>
+              </Grid.Col>
+            );
+          })}
         </Grid>
       )}
 

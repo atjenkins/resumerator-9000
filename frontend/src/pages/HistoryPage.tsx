@@ -11,6 +11,10 @@ interface Analysis {
   resume_id?: string;
   company_id?: string;
   job_id?: string;
+  metadata?: {
+    duration_ms?: number;
+    [key: string]: any;
+  };
 }
 
 export function HistoryPage() {
@@ -56,25 +60,39 @@ export function HistoryPage() {
         </Card>
       ) : (
         <Stack gap="md">
-          {analyses.map((analysis) => (
-            <Card key={analysis.id} shadow="sm" padding="lg">
-              <Group justify="apart" mb="sm">
-                <Group>
-                  <Badge color={analysis.type === "review" ? "blue" : "green"}>
-                    {analysis.type === "review"
-                      ? "Analysis"
-                      : "Tailored Resume"}
-                  </Badge>
-                  <Text size="sm" c="dimmed">
-                    {new Date(analysis.created_at).toLocaleString()}
-                  </Text>
+          {analyses.map((analysis) => {
+            const durationMs = analysis.metadata?.duration_ms;
+            const durationText = durationMs
+              ? durationMs >= 60000
+                ? `${Math.floor(durationMs / 60000)}m ${Math.floor((durationMs % 60000) / 1000)}s`
+                : `${Math.floor(durationMs / 1000)}s`
+              : null;
+
+            return (
+              <Card key={analysis.id} shadow="sm" padding="lg">
+                <Group justify="apart" mb="sm">
+                  <Group>
+                    <Badge color={analysis.type === "review" ? "blue" : "green"}>
+                      {analysis.type === "review"
+                        ? "Analysis"
+                        : "Tailored Resume"}
+                    </Badge>
+                    <Text size="sm" c="dimmed">
+                      {new Date(analysis.created_at).toLocaleString()}
+                    </Text>
+                    {durationText && (
+                      <Text size="xs" c="dimmed">
+                        • Completed in {durationText}
+                      </Text>
+                    )}
+                  </Group>
                 </Group>
-              </Group>
-              <Text size="sm" style={{ whiteSpace: "pre-wrap" }} lineClamp={3}>
-                {analysis.content}
-              </Text>
-            </Card>
-          ))}
+                <Text size="sm" style={{ whiteSpace: "pre-wrap" }} lineClamp={3}>
+                  {analysis.content}
+                </Text>
+              </Card>
+            );
+          })}
         </Stack>
       )}
     </Stack>
