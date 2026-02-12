@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { authMiddleware, AuthRequest } from "../middleware/auth.middleware";
 import { asyncHandler } from "../middleware/error.middleware";
 import { supabase } from "../services/supabase.service";
+import { logActivity } from "../services/activity.service";
 import { ImportAgent } from "../agents/import-agent";
 
 const router = Router();
@@ -72,6 +73,15 @@ router.post(
       throw new Error("Failed to create company: " + error.message);
     }
 
+    // Log activity
+    logActivity({
+      userId,
+      action: "create",
+      entityType: "company",
+      entityId: company.id,
+      displayTitle: `Created company '${name}'`,
+    });
+
     res.status(201).json(company);
   })
 );
@@ -139,6 +149,15 @@ router.put(
       throw new Error("Failed to update company: " + error.message);
     }
 
+    // Log activity
+    logActivity({
+      userId,
+      action: "update",
+      entityType: "company",
+      entityId: id,
+      displayTitle: `Updated company '${company.name}'`,
+    });
+
     res.json(company);
   })
 );
@@ -153,6 +172,14 @@ router.delete(
     const userId = req.user.id;
     const { id } = req.params;
 
+    // Get company name before deleting
+    const { data: company } = await supabase
+      .from("companies")
+      .select("name")
+      .eq("id", id)
+      .eq("user_id", userId)
+      .single();
+
     const { error } = await supabase
       .from("companies")
       .delete()
@@ -161,6 +188,17 @@ router.delete(
 
     if (error) {
       throw new Error("Failed to delete company: " + error.message);
+    }
+
+    // Log activity
+    if (company) {
+      logActivity({
+        userId,
+        action: "delete",
+        entityType: "company",
+        entityId: id,
+        displayTitle: `Deleted company '${company.name}'`,
+      });
     }
 
     res.json({ success: true, message: "Company deleted" });

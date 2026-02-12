@@ -13,7 +13,6 @@ import {
   Divider,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useAuth } from "../contexts/AuthContext";
 import { AIProgressBar } from "../components/shared/AIProgressBar";
 import {
   getResumes,
@@ -58,14 +57,13 @@ interface AnalysisResult {
     feedback: string;
   }>;
   duration_ms?: number;
-  savedResultId?: string;
+  analysisId?: string;
 }
 
 export function AnalyzePage({
   onNavigate,
   preSelectedResumeId,
 }: AnalyzePageProps) {
-  const { profile } = useAuth();
   const [source, setSource] = useState<"resume" | "profile">(
     preSelectedResumeId ? "resume" : "profile"
   );
@@ -237,9 +235,20 @@ export function AnalyzePage({
                   </Text>
                 )}
               </div>
-              <Badge size="xl" color={result.score >= 80 ? "green" : result.score >= 60 ? "yellow" : "red"}>
-                Score: {result.score}/100
-              </Badge>
+              <Group>
+                <Badge size="xl" color={result.score >= 80 ? "green" : result.score >= 60 ? "yellow" : "red"}>
+                  Score: {result.score}/100
+                </Badge>
+                {result.analysisId && (
+                  <Button
+                    variant="light"
+                    size="xs"
+                    onClick={() => onNavigate("analysis-detail", { id: result.analysisId })}
+                  >
+                    View Saved Analysis
+                  </Button>
+                )}
+              </Group>
             </Group>
 
             <div>

@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { authMiddleware, AuthRequest } from "../middleware/auth.middleware";
 import { asyncHandler } from "../middleware/error.middleware";
 import { supabase } from "../services/supabase.service";
+import { logActivity } from "../services/activity.service";
 import { ImportAgent } from "../agents/import-agent";
 
 const router = Router();
@@ -83,6 +84,14 @@ router.put(
       throw new Error("Failed to update profile: " + error.message);
     }
 
+    // Log activity
+    logActivity({
+      userId,
+      action: "update",
+      entityType: "profile",
+      displayTitle: `Updated profile '${profile.display_name}'`,
+    });
+
     res.json(profile);
   })
 );
@@ -103,10 +112,12 @@ router.post(
       return;
     }
 
+    const startTime = Date.now();
+
     // Get current profile
     const { data: currentProfile } = await supabase
       .from("profiles")
-      .select("content")
+      .select("content, display_name")
       .eq("id", userId)
       .single();
 
@@ -124,6 +135,8 @@ router.post(
       );
     }
 
+    const duration_ms = Date.now() - startTime;
+
     // Update profile with enriched content
     const { data: profile, error } = await supabase
       .from("profiles")
@@ -139,7 +152,16 @@ router.post(
       throw new Error("Failed to enrich profile: " + error.message);
     }
 
-    res.json(profile);
+    // Log activity
+    logActivity({
+      userId,
+      action: "enrich",
+      entityType: "profile",
+      durationMs: duration_ms,
+      displayTitle: `Enriched profile with ${mode === "merge" ? "merged" : "replaced"} content`,
+    });
+
+    res.json({ ...profile, duration_ms });
   })
 );
 

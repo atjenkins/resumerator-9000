@@ -241,30 +241,39 @@ NODE_ENV=development
 
 ### Backend Patterns
 
-- **MVC-like structure** - Routes, agents (controllers), models (to be added)
+- **MVC-like structure** - Routes, services, agents (controllers)
 - **Middleware pattern** - Auth, error handling, logging
 - **Agent pattern** - Specialized AI agents for different tasks (JobFitAgent, GeneralResumeAgent, ResumeBuilderAgent)
 - **Parser abstraction** - Unified interface for different file types
-- **Duration tracking** - All AI operations track and store `duration_ms` in metadata
+- **Service layer** - `activity.service.ts` for centralized activity logging (fire-and-forget)
+- **Duration tracking** - All AI operations track `duration_ms` as first-class columns
+- **Activity logging** - All user actions automatically logged to `activity_log` table
 
 ### API Endpoints
 
 #### Core Resources
-- `/api/profile` - User profile management
-- `/api/resumes` - Resume CRUD + legacy AI operations
+- `/api/profile` - User profile management + enrich operation
+- `/api/resumes` - Resume CRUD + upload/parse operations
 - `/api/companies` - Company CRUD + parsing
 - `/api/jobs` - Job CRUD + parsing
-- `/api/analyses` - Historical analysis results
+- `/api/analyses` - First-class analysis results (queryable, structured)
+  - `GET /api/analyses` - List with filters (sourceType, jobId, analysisType, minScore)
+  - `GET /api/analyses/:id` - Get specific analysis with full details
+  - `DELETE /api/analyses/:id` - Delete an analysis
+- `/api/activity` - Activity log (audit trail)
+  - `GET /api/activity` - List with filters (action, entityType, entityId)
 
-#### AI Operations (New)
+#### AI Operations
 - `/api/ai/analyze` - Unified analysis endpoint
   - Accepts `source: 'resume' | 'profile'`
   - Optional job/company context
-  - Returns analysis with duration tracking
+  - Creates structured `analyses` entry with score, fit_rating, strengths, etc.
+  - Logs activity automatically
 - `/api/ai/generate` - Unified generation endpoint
   - Accepts `source: 'resume' | 'profile'`
   - Requires job ID for tailoring
-  - Creates new resume automatically if `save: true`
+  - Creates new resume with full provenance tracking (origin, source_type, generation metadata)
+  - Logs activity automatically
 
 ---
 

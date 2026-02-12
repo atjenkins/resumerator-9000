@@ -67,6 +67,92 @@ ALTER TABLE results DROP COLUMN IF EXISTS company_id;
 ALTER TABLE results DROP COLUMN IF EXISTS job_id;
 ```
 
+### `003_add_updated_at_columns.sql`
+
+**Created:** 2026-02-11  
+**Description:** Add updated_at columns and triggers
+
+**Changes:**
+
+- Add `updated_at` columns to `profiles`, `companies`, `jobs`, `resumes`
+- Add database triggers to automatically update `updated_at` on record modification
+- All `updated_at` columns default to NOW()
+
+**Rollback:**
+
+```sql
+ALTER TABLE profiles DROP COLUMN IF EXISTS updated_at;
+ALTER TABLE companies DROP COLUMN IF EXISTS updated_at;
+ALTER TABLE jobs DROP COLUMN IF EXISTS updated_at;
+ALTER TABLE resumes DROP COLUMN IF EXISTS updated_at;
+DROP TRIGGER IF EXISTS set_updated_at ON profiles;
+DROP TRIGGER IF EXISTS set_updated_at ON companies;
+DROP TRIGGER IF EXISTS set_updated_at ON jobs;
+DROP TRIGGER IF EXISTS set_updated_at ON resumes;
+DROP FUNCTION IF EXISTS update_updated_at_column();
+```
+
+### `004_analyses_and_activity_log.sql`
+
+**Created:** 2026-02-11  
+**Description:** Separate first-class analyses from activity logging. Add provenance tracking to resumes.
+
+**⚠️ BREAKING CHANGE:** This migration drops the `results` table. All historical data will be lost.
+
+**Changes:**
+
+- **Drop:** `results` table (old analysis storage)
+- **Create:** `analyses` table with structured, queryable columns for AI analysis results
+  - Separate columns for `score`, `fit_rating`, `summary`, `strengths`, `improvements`, `categories`
+  - Job-fit specific fields: `missing_keywords`, `transferable_skills`, `targeted_suggestions`
+  - Performance tracking: `duration_ms`
+  - Full RLS policies and optimized indexes
+- **Create:** `activity_log` table for append-only audit trail of all user actions
+  - Tracks: `action`, `entity_type`, `entity_id`, `duration_ms`, `display_title`
+  - Promoted columns for fast querying (no JSONB digging)
+  - Denormalized for fast rendering without JOINs
+- **Alter:** `resumes` table to add provenance tracking columns
+  - `origin`: 'manual' | 'uploaded' | 'generated'
+  - `source_type`, `source_resume_id`: track generation lineage
+  - `is_edited`: flag for post-generation edits
+  - `generation_summary`, `emphasized_skills`, `selected_experiences`: generation metadata
+  - `generation_duration_ms`: AI operation timing
+
+**Rollback:**
+
+```sql
+-- Drop new tables
+DROP TABLE IF EXISTS analyses CASCADE;
+DROP TABLE IF EXISTS activity_log CASCADE;
+
+-- Remove new resume columns
+ALTER TABLE resumes
+  DROP COLUMN IF EXISTS origin,
+  DROP COLUMN IF EXISTS source_type,
+  DROP COLUMN IF EXISTS source_resume_id,
+  DROP COLUMN IF EXISTS is_edited,
+  DROP COLUMN IF EXISTS generation_summary,
+  DROP COLUMN IF EXISTS emphasized_skills,
+  DROP COLUMN IF EXISTS selected_experiences,
+  DROP COLUMN IF EXISTS generation_duration_ms;
+
+-- Recreate old results table (data will be lost)
+CREATE TABLE results (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  resume_id UUID,
+  company_id UUID,
+  job_id UUID,
+  type TEXT NOT NULL CHECK (type IN ('review', 'build')),
+  person_name TEXT,
+  company_name TEXT,
+  job_title TEXT,
+  content TEXT,
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
 ---
 
 ## How to Apply Migrations
@@ -230,6 +316,44 @@ SELECT 'results', COUNT(*) FROM results;
 SELECT * FROM jobs WHERE company_id NOT IN (SELECT id FROM companies);
 SELECT * FROM resumes WHERE user_id NOT IN (SELECT id FROM auth.users);
 ```
+
+---
+
+## TypeScript Type Generation
+
+After running any migration, regenerate TypeScript types for full type safety:
+
+```bash
+cd backend
+npm run db:types
+```
+
+This pulls your live Supabase schema and generates `src/types/database.ts`.
+
+### What it does:
+
+- Generates types for all tables, views, functions, and enums
+- Provides `Row`, `Insert`, and `Update` types for each table
+- Enables autocomplete and compile-time validation for all database operations
+
+### Example:
+
+```typescript
+// Before (returns any):
+const { data } = await supabase.from("resumes").select("*");
+
+// After (returns Database['public']['Tables']['resumes']['Row'][] | null):
+const { data } = await supabase.from("resumes").select("*");
+// TypeScript knows all columns: id, title, content, origin, etc.
+```
+
+### When to regenerate:
+
+- After running a migration
+- After adding/removing/renaming tables or columns
+- After changing column types or constraints
+
+**Note**: `src/types/database.ts` is gitignored. Each developer regenerates it locally after pulling schema changes.
 
 ---
 

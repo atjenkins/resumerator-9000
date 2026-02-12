@@ -78,7 +78,21 @@ VITE_SUPABASE_URL=your-project.supabase.co
 SUPABASE_PUBLISHABLE_KEY=your-anon-key
 ```
 
-3. **Run in development:**
+3. **Generate TypeScript types from Supabase schema:**
+
+```bash
+cd backend
+
+# One-time: authenticate with Supabase CLI
+npx supabase login
+
+# Generate types (run after each migration)
+npm run db:types
+```
+
+This creates `backend/src/types/database.ts` with full type safety for all database operations.
+
+4. **Run in development:**
 
 ```bash
 # Terminal 1 - Backend

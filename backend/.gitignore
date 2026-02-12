@@ -7,6 +7,9 @@ dist/
 # Environment files
 .env
 
+# Generated types (regenerate with npm run db:types)
+src/types/database.ts
+
 # IDE
 .idea/
 .vscode/

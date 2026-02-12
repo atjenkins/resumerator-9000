@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { authMiddleware, AuthRequest } from "../middleware/auth.middleware";
 import { asyncHandler } from "../middleware/error.middleware";
 import { supabase } from "../services/supabase.service";
+import { logActivity } from "../services/activity.service";
 import { ImportAgent } from "../agents/import-agent";
 
 const router = Router();
@@ -27,7 +28,7 @@ router.get(
       .order("created_at", { ascending: false });
 
     // Filter by company if specified
-    if (companyId) {
+    if (companyId && typeof companyId === "string") {
       query = query.eq("company_id", companyId);
     }
 
@@ -99,6 +100,16 @@ router.post(
       }
       throw new Error("Failed to create job: " + error.message);
     }
+
+    // Log activity
+    logActivity({
+      userId,
+      action: "create",
+      entityType: "job",
+      entityId: job.id,
+      relatedCompanyId: companyId,
+      displayTitle: `Created job '${title}'`,
+    });
 
     res.status(201).json(job);
   })
@@ -186,6 +197,16 @@ router.put(
       throw new Error("Failed to update job: " + error.message);
     }
 
+    // Log activity
+    logActivity({
+      userId,
+      action: "update",
+      entityType: "job",
+      entityId: typeof id === "string" ? id : id[0],
+      relatedCompanyId: job.company_id || undefined,
+      displayTitle: `Updated job '${job.title}'`,
+    });
+
     res.json(job);
   })
 );
@@ -200,6 +221,14 @@ router.delete(
     const userId = req.user.id;
     const { id } = req.params;
 
+    // Get job title before deleting
+    const { data: job } = await supabase
+      .from("jobs")
+      .select("title")
+      .eq("id", id)
+      .eq("user_id", userId)
+      .single();
+
     const { error } = await supabase
       .from("jobs")
       .delete()
@@ -208,6 +237,17 @@ router.delete(
 
     if (error) {
       throw new Error("Failed to delete job: " + error.message);
+    }
+
+    // Log activity
+    if (job) {
+      logActivity({
+        userId,
+        action: "delete",
+        entityType: "job",
+        entityId: typeof id === "string" ? id : id[0],
+        displayTitle: `Deleted job '${job.title}'`,
+      });
     }
 
     res.json({ success: true, message: "Job deleted" });

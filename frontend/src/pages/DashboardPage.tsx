@@ -45,9 +45,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
         resumes: (resumesData as any[]).length,
         companies: (companiesData as any[]).length,
         jobs: (jobsData as any[]).length,
-        analyses: (analysesData as any).results
-          ? (analysesData as any).results.length
-          : (analysesData as any[]).length || 0,
+        analyses: analysesData.results.length,
       });
     } catch (error) {
       console.error("Failed to load dashboard stats", error);

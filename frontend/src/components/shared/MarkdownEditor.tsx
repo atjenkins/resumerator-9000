@@ -9,7 +9,7 @@ import {
   Divider,
   TypographyStylesProvider,
 } from "@mantine/core";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { marked } from "marked";
 import {
   IconBold,
@@ -41,7 +41,6 @@ export function MarkdownEditor({
   onSave,
   saving = false,
   placeholder = "Enter markdown content...",
-  minRows = 30,
   defaultView = "edit",
   height = 500,
 }: MarkdownEditorProps) {
@@ -108,56 +107,70 @@ export function MarkdownEditor({
     }, 0);
   };
 
-  const toolbarButtons = [
+  type ToolbarButton = 
+    | { type: "button"; icon: React.ComponentType<any>; label: string; onClick: () => void }
+    | { type: "divider" };
+
+  const toolbarButtons: ToolbarButton[] = [
     {
+      type: "button",
       icon: IconH1,
       label: "H1",
       onClick: () => insertAtLineStart("# "),
     },
     {
+      type: "button",
       icon: IconH2,
       label: "H2",
       onClick: () => insertAtLineStart("## "),
     },
     {
+      type: "button",
       icon: IconH3,
       label: "H3",
       onClick: () => insertAtLineStart("### "),
     },
     { type: "divider" },
     {
+      type: "button",
       icon: IconBold,
       label: "Bold",
       onClick: () => insertText("**", "**"),
     },
     {
+      type: "button",
       icon: IconItalic,
       label: "Italic",
       onClick: () => insertText("*", "*"),
     },
     { type: "divider" },
     {
+      type: "button",
       icon: IconList,
       label: "Bullet List",
       onClick: () => insertAtLineStart("- "),
     },
     {
+      type: "button",
       icon: IconListNumbers,
       label: "Numbered List",
       onClick: () => insertAtLineStart("1. "),
     },
     { type: "divider" },
     {
+      type: "button",
       icon: IconLine,
       label: "Horizontal Rule",
       onClick: () => insertText("\n---\n"),
     },
     {
+      type: "button",
       icon: IconLink,
       label: "Link",
       onClick: () => insertText("[", "](url)", "link text"),
     },
     {
+      type: "button",
       icon: IconCode,
       label: "Code Block",
       onClick: () => insertText("\n```\n", "\n```\n", "code"),
@@ -199,10 +212,12 @@ export function MarkdownEditor({
       {/* Toolbar (show only in edit or split mode) */}
       {(viewMode === "edit" || viewMode === "split") && (
         <Group gap="xs">
-          {toolbarButtons.map((button, index) =>
-            button.type === "divider" ? (
-              <Divider key={`divider-${index}`} orientation="vertical" />
-            ) : (
+          {toolbarButtons.map((button, index) => {
+            if (button.type === "divider") {
+              return <Divider key={`divider-${index}`} orientation="vertical" />;
+            }
+            const IconComponent = button.icon;
+            return (
               <ActionIcon
                 key={index}
                 variant="light"
@@ -210,10 +225,10 @@ export function MarkdownEditor({
                 onClick={button.onClick}
                 title={button.label}
               >
-                <button.icon size={18} />
+                <IconComponent size={18} />
               </ActionIcon>
-            )
-          )}
+            );
+          })}
         </Group>
       )}
 

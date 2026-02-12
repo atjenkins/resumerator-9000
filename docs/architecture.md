@@ -80,16 +80,49 @@ jobs
 ├── created_at (timestamp)
 └── updated_at (timestamp)
 
-results
+resumes (provenance fields)
+├── origin (enum: 'manual' | 'uploaded' | 'generated')
+├── source_type (enum: 'resume' | 'profile')
+├── source_resume_id (uuid, FK to resumes)
+├── is_edited (boolean)
+├── generation_summary (text)
+├── emphasized_skills (jsonb)
+├── selected_experiences (jsonb)
+└── generation_duration_ms (integer)
+
+analyses
 ├── id (uuid)
 ├── user_id (uuid, FK)
-├── type (enum: 'review' | 'build')
-├── person_name (text)
-├── company_name (text)
-├── job_title (text)
-├── content (text)  -- markdown result
-├── created_at (timestamp)
-└── metadata (jsonb)  -- flexible data
+├── source_type (enum: 'resume' | 'profile')
+├── source_resume_id (uuid, FK)
+├── company_id (uuid, FK)
+├── job_id (uuid, FK)
+├── analysis_type (enum: 'general' | 'job-fit')
+├── score (integer)
+├── fit_rating (enum: 'excellent' | 'good' | 'moderate' | 'poor')
+├── summary (text)
+├── strengths (jsonb)
+├── improvements (jsonb)
+├── categories (jsonb)
+├── missing_keywords (jsonb)
+├── transferable_skills (jsonb)
+├── targeted_suggestions (jsonb)
+├── duration_ms (integer)
+└── created_at (timestamp)
+
+activity_log
+├── id (uuid)
+├── user_id (uuid, FK)
+├── action (text)  -- 'analyze', 'generate', 'upload', etc.
+├── entity_type (text)  -- 'resume', 'profile', 'company', etc.
+├── entity_id (uuid)
+├── duration_ms (integer)  -- searchable, not in JSONB
+├── source_type (text)
+├── related_job_id (uuid)
+├── related_company_id (uuid)
+├── display_title (text)  -- human-readable
+├── details (jsonb)  -- overflow
+└── created_at (timestamp)
 ```
 
 **Row Level Security (RLS):**
@@ -146,13 +179,14 @@ resumerator-9000/
 │   │   │   ├── ProfilePage.tsx
 │   │   │   ├── ResumesPage.tsx
 │   │   │   ├── ResumeDetailPage.tsx
+│   │   │   ├── AnalyzePage.tsx
+│   │   │   ├── GeneratePage.tsx
+│   │   │   ├── HistoryPage.tsx
 │   │   │   ├── CompaniesPage.tsx
 │   │   │   ├── CompanyDetailPage.tsx
 │   │   │   ├── JobsPage.tsx
 │   │   │   ├── JobDetailPage.tsx
-│   │   │   ├── AnalyzePage.tsx       # NEW: Unified analysis
-│   │   │   ├── GeneratePage.tsx      # NEW: Unified generation
-│   │   │   └── HistoryPage.tsx
+│   │   │   └── AnalysisDetailPage.tsx  # NEW: View saved analysis
 │   │   ├── contexts/            # React contexts
 │   │   ├── services/
 │   │   │   ├── api.ts           # API client with all endpoints
@@ -175,9 +209,11 @@ resumerator-9000/
 │   │   │   ├── resumes.routes.ts
 │   │   │   ├── companies.routes.ts
 │   │   │   ├── jobs.routes.ts
-│   │   │   ├── analyses.routes.ts
-│   │   │   └── ai.routes.ts     # NEW: Unified AI operations
+│   │   │   ├── analyses.routes.ts  # First-class analysis results
+│   │   │   ├── activity.routes.ts  # NEW: Activity log
+│   │   │   └── ai.routes.ts        # NEW: Unified AI operations
 │   │   ├── services/
+│   │   │   ├── activity.service.ts  # NEW: Activity logging
 │   │   │   └── supabase.service.ts
 │   │   └── web/
 │   │       └── server.ts

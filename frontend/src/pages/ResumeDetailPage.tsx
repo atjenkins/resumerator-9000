@@ -23,7 +23,7 @@ import {
 } from "../services/api";
 
 interface ResumeDetailPageProps {
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, state?: any) => void;
   resumeId: string;
 }
 
@@ -34,6 +34,14 @@ interface Resume {
   is_primary: boolean;
   company_id?: string;
   job_id?: string;
+  origin: "manual" | "uploaded" | "generated";
+  source_type?: "resume" | "profile";
+  source_resume_id?: string;
+  is_edited: boolean;
+  generation_summary?: string;
+  emphasized_skills?: any[];
+  selected_experiences?: any[];
+  generation_duration_ms?: number;
   created_at: string;
   updated_at: string;
 }
@@ -289,6 +297,88 @@ export function ResumeDetailPage({
           </Button>
         </Group>
       </Card>
+
+      {resume.origin !== "manual" && (
+        <Card shadow="sm" padding="lg">
+          <Title order={3} mb="md">
+            Resume Provenance
+          </Title>
+          <Stack gap="sm">
+            <Group>
+              <Text fw={500} size="sm" c="dimmed">
+                Origin:
+              </Text>
+              <Badge color={resume.origin === "uploaded" ? "blue" : "green"}>
+                {resume.origin.toUpperCase()}
+              </Badge>
+              {resume.origin === "generated" && resume.is_edited && (
+                <Badge color="orange">EDITED</Badge>
+              )}
+            </Group>
+
+            {resume.origin === "generated" && (
+              <>
+                {resume.source_type && (
+                  <Group>
+                    <Text fw={500} size="sm" c="dimmed">
+                      Generated from:
+                    </Text>
+                    <Text size="sm">{resume.source_type === "resume" ? "Resume" : "Profile"}</Text>
+                  </Group>
+                )}
+
+                {resume.generation_duration_ms && (
+                  <Group>
+                    <Text fw={500} size="sm" c="dimmed">
+                      Generation time:
+                    </Text>
+                    <Text size="sm">{(resume.generation_duration_ms / 1000).toFixed(1)}s</Text>
+                  </Group>
+                )}
+
+                {resume.generation_summary && (
+                  <div>
+                    <Text fw={500} size="sm" c="dimmed" mb="xs">
+                      Summary:
+                    </Text>
+                    <Text size="sm">{resume.generation_summary}</Text>
+                  </div>
+                )}
+
+                {resume.emphasized_skills && resume.emphasized_skills.length > 0 && (
+                  <div>
+                    <Text fw={500} size="sm" c="dimmed" mb="xs">
+                      Emphasized Skills:
+                    </Text>
+                    <Group gap="xs">
+                      {resume.emphasized_skills.map((skill: any, i: number) => (
+                        <Badge key={i} variant="light">
+                          {typeof skill === "string" ? skill : skill.name || JSON.stringify(skill)}
+                        </Badge>
+                      ))}
+                    </Group>
+                  </div>
+                )}
+
+                {resume.selected_experiences && resume.selected_experiences.length > 0 && (
+                  <div>
+                    <Text fw={500} size="sm" c="dimmed" mb="xs">
+                      Selected Experiences:
+                    </Text>
+                    <Stack gap="xs">
+                      {resume.selected_experiences.map((exp: any, i: number) => (
+                        <Text key={i} size="sm">
+                          • {typeof exp === "string" ? exp : exp.title || exp.company || JSON.stringify(exp)}
+                        </Text>
+                      ))}
+                    </Stack>
+                  </div>
+                )}
+              </>
+            )}
+          </Stack>
+        </Card>
+      )}
 
       <Text size="xs" c="dimmed">
         Created: {new Date(resume.created_at).toLocaleString()} | Last updated:{" "}

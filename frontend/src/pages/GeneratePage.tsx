@@ -14,7 +14,6 @@ import {
   TypographyStylesProvider,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useAuth } from "../contexts/AuthContext";
 import { marked } from "marked";
 import { AIProgressBar } from "../components/shared/AIProgressBar";
 import {
@@ -64,7 +63,6 @@ export function GeneratePage({
   onNavigate,
   preSelectedResumeId,
 }: GeneratePageProps) {
-  const { profile } = useAuth();
   const [source, setSource] = useState<"resume" | "profile">(
     preSelectedResumeId ? "resume" : "profile"
   );

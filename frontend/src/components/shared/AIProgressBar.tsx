@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Progress, Text, Stack, Box } from "@mantine/core";
 
 interface AIProgressBarProps {
@@ -52,7 +52,7 @@ export function AIProgressBar({
   const [progress, setProgress] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [currentMessage, setCurrentMessage] = useState("");
-  const [messageIndex, setMessageIndex] = useState(0);
+  const messageIndexRef = useRef(0);
 
   const messages = SILLY_MESSAGES[operationType];
 
@@ -71,7 +71,7 @@ export function AIProgressBar({
     // Reset when starting
     setProgress(0);
     setElapsedSeconds(0);
-    setMessageIndex(0);
+    messageIndexRef.current = 0;
     setCurrentMessage(messages[0]);
 
     // Progress curve:
@@ -112,11 +112,8 @@ export function AIProgressBar({
 
     // Rotate messages every 3-4 seconds
     const messageInterval = setInterval(() => {
-      setMessageIndex((prev) => {
-        const next = (prev + 1) % messages.length;
-        setCurrentMessage(messages[next]);
-        return next;
-      });
+      messageIndexRef.current = (messageIndexRef.current + 1) % messages.length;
+      setCurrentMessage(messages[messageIndexRef.current]);
     }, 3500);
 
     return () => {

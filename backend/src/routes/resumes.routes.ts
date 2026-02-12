@@ -3,10 +3,8 @@ import multer from "multer";
 import { authMiddleware, AuthRequest } from "../middleware/auth.middleware";
 import { asyncHandler } from "../middleware/error.middleware";
 import { supabase } from "../services/supabase.service";
+import { logActivity } from "../services/activity.service";
 import { ImportAgent } from "../agents/import-agent";
-import { JobFitAgent } from "../agents/job-fit-agent";
-import { GeneralResumeAgent } from "../agents/general-agent";
-import { ResumeBuilderAgent } from "../agents/builder-agent";
 import { parsePdfBuffer } from "../parsers/pdf-parser";
 import { parseDocxBuffer } from "../parsers/docx-parser";
 import path from "path";
@@ -87,6 +85,7 @@ router.post(
         company_id: companyId || null,
         job_id: jobId || null,
         is_primary: isPrimary,
+        origin: "manual",
       })
       .select()
       .single();
@@ -94,6 +93,15 @@ router.post(
     if (error) {
       throw new Error("Failed to create resume: " + error.message);
     }
+
+    // Log activity
+    logActivity({
+      userId,
+      action: "create",
+      entityType: "resume",
+      entityId: resume.id,
+      displayTitle: `Created resume '${title}'`,
+    });
 
     res.status(201).json(resume);
   })
@@ -108,6 +116,7 @@ router.post(
   "/parse",
   upload.single("file"),
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user.id;
     const file = req.file;
 
     if (!file) {
@@ -115,6 +124,7 @@ router.post(
       return;
     }
 
+    const startTime = Date.now();
     const ext = path.extname(file.originalname).toLowerCase();
     let content: string;
 
@@ -135,7 +145,19 @@ router.post(
 
     const agent = new ImportAgent();
     const markdown = await agent.parseResume(content);
-    res.json({ markdown });
+    
+    const duration_ms = Date.now() - startTime;
+
+    // Log activity (parse only, no entity created yet)
+    logActivity({
+      userId,
+      action: "parse",
+      entityType: "resume",
+      durationMs: duration_ms,
+      displayTitle: `Parsed file '${file.originalname}'`,
+    });
+
+    res.json({ markdown, duration_ms });
   })
 );
 
@@ -180,12 +202,26 @@ router.put(
     const { id } = req.params;
     const { title, content, companyId, jobId, isPrimary } = req.body;
 
+    // First, get the current resume to check origin
+    const { data: existingResume } = await supabase
+      .from("resumes")
+      .select("origin, title, is_edited")
+      .eq("id", id)
+      .eq("user_id", userId)
+      .single();
+
     const updates: any = {
       updated_at: new Date().toISOString(),
     };
 
     if (title !== undefined) updates.title = title;
-    if (content !== undefined) updates.content = content;
+    if (content !== undefined) {
+      updates.content = content;
+      // Mark as edited if it was generated and this is the first content edit
+      if (existingResume?.origin === "generated" && !existingResume.is_edited) {
+        updates.is_edited = true;
+      }
+    }
     if (companyId !== undefined) updates.company_id = companyId;
     if (jobId !== undefined) updates.job_id = jobId;
     if (isPrimary !== undefined) updates.is_primary = isPrimary;
@@ -206,6 +242,15 @@ router.put(
       throw new Error("Failed to update resume: " + error.message);
     }
 
+    // Log activity
+    logActivity({
+      userId,
+      action: "update",
+      entityType: "resume",
+      entityId: id,
+      displayTitle: `Updated resume '${resume.title}'`,
+    });
+
     res.json(resume);
   })
 );
@@ -220,6 +265,14 @@ router.delete(
     const userId = req.user.id;
     const { id } = req.params;
 
+    // Get resume title before deleting
+    const { data: resume } = await supabase
+      .from("resumes")
+      .select("title")
+      .eq("id", id)
+      .eq("user_id", userId)
+      .single();
+
     const { error } = await supabase
       .from("resumes")
       .delete()
@@ -230,217 +283,18 @@ router.delete(
       throw new Error("Failed to delete resume: " + error.message);
     }
 
-    res.json({ success: true, message: "Resume deleted" });
-  })
-);
-
-/**
- * POST /api/resumes/:id/analyze
- * Analyze/review a resume with optional context (AI operation)
- * Optional body params: companyId, jobId
- */
-router.post(
-  "/:id/analyze",
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user.id;
-    const { id } = req.params;
-    const { companyId, jobId, save = false } = req.body;
-
-    // Get resume
-    const { data: resume, error: resumeError } = await supabase
-      .from("resumes")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", userId)
-      .single();
-
-    if (resumeError) {
-      if (resumeError.code === "PGRST116") {
-        res.status(404).json({ error: "Resume not found" });
-        return;
-      }
-      throw new Error("Failed to fetch resume: " + resumeError.message);
-    }
-
-    // Get optional context
-    let companyData = null;
-    let jobData = null;
-
-    if (companyId) {
-      const { data } = await supabase
-        .from("companies")
-        .select("*")
-        .eq("id", companyId)
-        .eq("user_id", userId)
-        .single();
-      companyData = data;
-    }
-
-    if (jobId) {
-      const { data } = await supabase
-        .from("jobs")
-        .select("*")
-        .eq("id", jobId)
-        .eq("user_id", userId)
-        .single();
-      jobData = data;
-    }
-
-    // Run appropriate agent based on context
-    let result: any;
-
-    if (jobData || companyData) {
-      // Build context string
-      let context = "";
-      if (companyData) {
-        context += `## Company Context\n\n${companyData.content}\n\n`;
-      }
-      if (jobData) {
-        context += `## Job Description\n\n${jobData.content}`;
-      }
-
-      const agent = new JobFitAgent();
-      result = await agent.review(resume.content, context);
-    } else {
-      const agent = new GeneralResumeAgent();
-      result = await agent.review(resume.content);
-    }
-
-    // Save result if requested
-    if (save) {
-      const { data: savedResult } = await supabase
-        .from("results")
-        .insert({
-          user_id: userId,
-          resume_id: resume.id,
-          company_id: companyData?.id || null,
-          job_id: jobData?.id || null,
-          type: "review",
-          person_name: resume.title,
-          company_name: companyData?.name,
-          job_title: jobData?.title,
-          content: JSON.stringify(result),
-          metadata: {
-            analysisType: jobData || companyData ? "job-fit" : "general",
-          },
-        })
-        .select()
-        .single();
-
-      result.savedResultId = savedResult?.id;
-    }
-
-    res.json(result);
-  })
-);
-
-/**
- * POST /api/resumes/:id/tailor
- * Generate a tailored resume for a specific job (AI operation)
- * Required body param: jobId
- */
-router.post(
-  "/:id/tailor",
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user.id;
-    const { id } = req.params;
-    const { jobId, save = false } = req.body;
-
-    if (!jobId) {
-      res.status(400).json({ error: "jobId is required for tailoring" });
-      return;
-    }
-
-    // Get resume
-    const { data: resume, error: resumeError } = await supabase
-      .from("resumes")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", userId)
-      .single();
-
-    if (resumeError) {
-      if (resumeError.code === "PGRST116") {
-        res.status(404).json({ error: "Resume not found" });
-        return;
-      }
-      throw new Error("Failed to fetch resume: " + resumeError.message);
-    }
-
-    // Get job
-    const { data: job, error: jobError } = await supabase
-      .from("jobs")
-      .select("*, companies(*)")
-      .eq("id", jobId)
-      .eq("user_id", userId)
-      .single();
-
-    if (jobError) {
-      if (jobError.code === "PGRST116") {
-        res.status(404).json({ error: "Job not found" });
-        return;
-      }
-      throw new Error("Failed to fetch job: " + jobError.message);
-    }
-
-    // Build context
-    let context = "";
-    if (job.companies) {
-      context += `## Company Context\n\n${job.companies.content}\n\n`;
-    }
-    context += `## Job Description\n\n${job.content}`;
-
-    // Generate tailored resume
-    const agent = new ResumeBuilderAgent();
-    const result = await agent.build(resume.content, context);
-
-    // Save result if requested
-    if (save) {
-      // Create a new resume with the tailored content and context
-      const { data: tailoredResume } = await supabase
-        .from("resumes")
-        .insert({
-          user_id: userId,
-          title: `${resume.title} - ${job.title}`,
-          content: result.markdown,
-          company_id: job.company_id || null,
-          job_id: job.id,
-          is_primary: false,
-        })
-        .select()
-        .single();
-
-      // Save analysis result with proper foreign keys
-      const { data: savedResult } = await supabase
-        .from("results")
-        .insert({
-          user_id: userId,
-          resume_id: tailoredResume?.id,
-          company_id: job.company_id || null,
-          job_id: job.id,
-          type: "build",
-          person_name: resume.title,
-          company_name: job.companies?.name,
-          job_title: job.title,
-          content: JSON.stringify(result),
-          metadata: {
-            originalResumeId: resume.id,
-            emphasizedSkills: result.emphasizedSkills,
-            selectedExperiences: result.selectedExperiences,
-          },
-        })
-        .select()
-        .single();
-
-      res.json({
-        ...result,
-        savedResultId: savedResult?.id,
-        tailoredResumeId: tailoredResume?.id,
+    // Log activity
+    if (resume) {
+      logActivity({
+        userId,
+        action: "delete",
+        entityType: "resume",
+        entityId: id,
+        displayTitle: `Deleted resume '${resume.title}'`,
       });
-      return;
     }
 
-    res.json(result);
+    res.json({ success: true, message: "Resume deleted" });
   })
 );
 
@@ -459,6 +313,8 @@ router.post(
       res.status(400).json({ error: "File is required" });
       return;
     }
+
+    const startTime = Date.now();
 
     // Parse file based on type
     const ext = path.extname(file.originalname).toLowerCase();
@@ -483,6 +339,8 @@ router.post(
     const agent = new ImportAgent();
     const structuredMarkdown = await agent.parseResume(content);
 
+    const duration_ms = Date.now() - startTime;
+
     // Create resume with structured content
     const title = file.originalname.replace(/\.(pdf|docx)$/i, "");
 
@@ -492,6 +350,7 @@ router.post(
         user_id: userId,
         title,
         content: structuredMarkdown,
+        origin: "uploaded",
       })
       .select()
       .single();
@@ -499,6 +358,16 @@ router.post(
     if (error) {
       throw new Error("Failed to create resume: " + error.message);
     }
+
+    // Log activity
+    logActivity({
+      userId,
+      action: "upload",
+      entityType: "resume",
+      entityId: resume.id,
+      durationMs: duration_ms,
+      displayTitle: `Uploaded and parsed resume '${title}'`,
+    });
 
     res.status(201).json(resume);
   })

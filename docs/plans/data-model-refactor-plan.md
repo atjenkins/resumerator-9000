@@ -416,3 +416,71 @@ Show resume provenance information:
 **Execute in order**: Phase 1 (run SQL) -> Phase 2 -> Phase 3 -> Phase 4 -> Phase 5
 
 **Prerequisites**: User must run the Phase 1 SQL migration in Supabase before backend changes will work.
+
+---
+
+## Execution Summary
+
+**Status:** ✅ All phases completed  
+**Date:** 2026-02-11
+
+### Phase Completion
+
+- ✅ **Phase 1: Database Migration** - Created `004_analyses_and_activity_log.sql`
+- ✅ **Phase 2: Backend Services & Routes** - All backend routes updated with activity logging
+- ✅ **Phase 3: Frontend API Client** - Types and API calls updated
+- ✅ **Phase 4: Frontend Pages** - All pages updated including new AnalysisDetailPage
+- ✅ **Phase 5: Documentation** - All documentation updated
+
+### Key Deliverables
+
+1. **Database Migration File**: `backend/database/migrations/004_analyses_and_activity_log.sql`
+   - Drops `results` table
+   - Creates `analyses` table with structured columns
+   - Creates `activity_log` table for audit trail
+   - Adds provenance columns to `resumes` table
+
+2. **New Backend Services**: `activity.service.ts` for centralized activity logging
+
+3. **Updated Backend Routes**:
+   - `ai.routes.ts` - Uses new tables, logs all operations
+   - `analyses.routes.ts` - Reads from new `analyses` table
+   - `activity.routes.ts` - NEW: Activity log endpoints
+   - `resumes.routes.ts` - Provenance tracking, activity logging
+   - `companies/jobs/profile.routes.ts` - Activity logging added
+
+4. **New Frontend Pages**: `AnalysisDetailPage.tsx` for viewing saved analyses
+
+5. **Updated Frontend Pages**:
+   - `AnalyzePage.tsx` - Link to view saved analysis
+   - `HistoryPage.tsx` - Complete rewrite using activity log
+   - `ResumeDetailPage.tsx` - Displays provenance information
+   - `App.tsx` - New analysis-detail route
+
+6. **Updated Documentation**:
+   - `backend/database/README.md` - Migration 004 documented
+   - `docs/architecture.md` - Schema and structure updated
+   - `docs/tech-stack.md` - Backend patterns and API endpoints updated
+
+### Next Steps for User
+
+⚠️ **CRITICAL**: Before starting the application, you MUST:
+
+1. Run the migration SQL in Supabase Dashboard:
+   - Open `backend/database/migrations/004_analyses_and_activity_log.sql`
+   - Copy entire contents
+   - Paste into Supabase SQL Editor
+   - Execute (this will drop the `results` table!)
+
+2. Restart backend server to load new routes
+
+3. Clear frontend cache/refresh browser to load new types
+
+### Breaking Changes
+
+- ❌ **Old `results` table dropped** - all historical data lost
+- ❌ **Old `/api/resumes/:id/analyze` endpoint removed**
+- ❌ **Old `/api/resumes/:id/tailor` endpoint removed**
+- ✅ **New unified `/api/ai/analyze` and `/api/ai/generate` endpoints**
+
+All features have been migrated to the new schema. The refactor is complete and ready for testing.

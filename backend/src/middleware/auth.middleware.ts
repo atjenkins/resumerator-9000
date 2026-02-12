@@ -7,6 +7,8 @@ export interface AuthRequest extends Request {
     id: string;
     email: string;
   };
+  // Override params to be string-only (all our routes use simple /:id patterns)
+  params: Record<string, string>;
 }
 
 /**

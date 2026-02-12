@@ -16,6 +16,7 @@ import { HistoryPage } from "./pages/HistoryPage";
 import { ResumeDetailPage } from "./pages/ResumeDetailPage";
 import { CompanyDetailPage } from "./pages/CompanyDetailPage";
 import { JobDetailPage } from "./pages/JobDetailPage";
+import { AnalysisDetailPage } from "./pages/AnalysisDetailPage";
 import { Login } from "./components/auth/Login";
 import { SignUp } from "./components/auth/SignUp";
 import { theme } from "./theme/theme";
@@ -80,7 +81,16 @@ function AuthenticatedApp() {
           />
         );
       case "history":
-        return <HistoryPage />;
+        return <HistoryPage onNavigate={handleNavigate} />;
+      case "analysis-detail":
+        return pageState?.id ? (
+          <AnalysisDetailPage
+            onNavigate={handleNavigate}
+            analysisId={pageState.id}
+          />
+        ) : (
+          <DashboardPage onNavigate={handleNavigate} />
+        );
       default:
         return <DashboardPage onNavigate={handleNavigate} />;
     }

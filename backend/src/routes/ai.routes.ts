@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { authMiddleware, AuthRequest } from "../middleware/auth.middleware";
 import { asyncHandler } from "../middleware/error.middleware";
 import { supabase } from "../services/supabase.service";
+import { logActivity } from "../services/activity.service";
 import { JobFitAgent } from "../agents/job-fit-agent";
 import { GeneralResumeAgent } from "../agents/general-agent";
 import { ResumeBuilderAgent } from "../agents/builder-agent";
@@ -34,7 +35,9 @@ router.post(
     }
 
     if (source === "resume" && !resumeId) {
-      res.status(400).json({ error: "resumeId is required when source is 'resume'" });
+      res
+        .status(400)
+        .json({ error: "resumeId is required when source is 'resume'" });
       return;
     }
 
@@ -105,6 +108,7 @@ router.post(
 
     // Run appropriate agent based on context
     let result: any;
+    let analysisType: "general" | "job-fit";
 
     if (jobData || companyData) {
       // Build context string
@@ -118,45 +122,68 @@ router.post(
 
       const agent = new JobFitAgent();
       result = await agent.review(sourceContent, context);
+      analysisType = "job-fit";
     } else {
       const agent = new GeneralResumeAgent();
       result = await agent.review(sourceContent);
+      analysisType = "general";
     }
 
     const duration_ms = Date.now() - startTime;
 
-    // Save result if requested
-    let savedResultId: string | undefined;
+    // Save analysis if requested
+    let analysisId: string | undefined;
 
     if (save) {
-      const { data: savedResult } = await supabase
-        .from("results")
+      const { data: savedAnalysis, error: analysisError } = await supabase
+        .from("analyses")
         .insert({
           user_id: userId,
-          resume_id: sourceResumeId,
-          company_id: companyData?.id || null,
-          job_id: jobData?.id || null,
-          type: "review",
-          person_name: sourceTitle,
-          company_name: companyData?.name,
-          job_title: jobData?.title,
-          content: JSON.stringify(result),
-          metadata: {
-            analysisType: jobData || companyData ? "job-fit" : "general",
-            source,
-            duration_ms,
-          },
+          source_type: source,
+          source_resume_id: sourceResumeId,
+          company_id: companyId || null,
+          job_id: jobId || null,
+          analysis_type: analysisType,
+          score: result.score,
+          fit_rating: result.fitRating || null,
+          summary: result.summary,
+          strengths: result.strengths,
+          improvements: result.improvements,
+          categories: result.categories,
+          missing_keywords: result.missingKeywords || [],
+          transferable_skills: result.transferableSkills || [],
+          targeted_suggestions: result.targetedSuggestions || [],
+          duration_ms,
         })
         .select()
         .single();
 
-      savedResultId = savedResult?.id;
+      if (analysisError) {
+        console.error("Failed to save analysis:", analysisError);
+      } else {
+        analysisId = savedAnalysis?.id;
+
+        // Log activity
+        const jobContext = jobData ? ` for ${jobData.title}` : "";
+        const companyContext = companyData ? ` at ${companyData.name}` : "";
+        logActivity({
+          userId,
+          action: "analyze",
+          entityType: "analysis",
+          entityId: analysisId,
+          durationMs: duration_ms,
+          sourceType: source,
+          relatedJobId: jobId,
+          relatedCompanyId: companyId,
+          displayTitle: `Analyzed ${source === "resume" ? `resume '${sourceTitle}'` : "profile"}${jobContext}${companyContext}`,
+        });
+      }
     }
 
     res.json({
       ...result,
       duration_ms,
-      savedResultId,
+      analysisId,
     });
   })
 );
@@ -184,7 +211,9 @@ router.post(
     }
 
     if (source === "resume" && !resumeId) {
-      res.status(400).json({ error: "resumeId is required when source is 'resume'" });
+      res
+        .status(400)
+        .json({ error: "resumeId is required when source is 'resume'" });
       return;
     }
 
@@ -196,6 +225,7 @@ router.post(
     // Get source content
     let sourceContent: string;
     let sourceTitle: string;
+    let sourceResumeIdForLog: string | null = null;
 
     if (source === "resume") {
       const { data: resume, error: resumeError } = await supabase
@@ -212,6 +242,7 @@ router.post(
 
       sourceContent = resume.content;
       sourceTitle = resume.title;
+      sourceResumeIdForLog = resume.id;
     } else {
       // source === 'profile'
       const { data: profile, error: profileError } = await supabase
@@ -259,12 +290,11 @@ router.post(
     const duration_ms = Date.now() - startTime;
 
     // Save result if requested
-    let savedResultId: string | undefined;
     let tailoredResumeId: string | undefined;
 
     if (save) {
-      // Create new resume with tailored content
-      const { data: tailoredResume } = await supabase
+      // Create new resume with provenance fields
+      const { data: tailoredResume, error: resumeError } = await supabase
         .from("resumes")
         .insert({
           user_id: userId,
@@ -273,43 +303,44 @@ router.post(
           company_id: job.company_id || null,
           job_id: job.id,
           is_primary: false,
+          origin: "generated",
+          source_type: source,
+          source_resume_id: sourceResumeIdForLog,
+          is_edited: false,
+          generation_summary: result.summary,
+          emphasized_skills: result.emphasizedSkills,
+          selected_experiences: result.selectedExperiences,
+          generation_duration_ms: duration_ms,
         })
         .select()
         .single();
 
-      tailoredResumeId = tailoredResume?.id;
+      if (resumeError) {
+        console.error("Failed to save generated resume:", resumeError);
+      } else {
+        tailoredResumeId = tailoredResume?.id;
 
-      // Save analysis result
-      const { data: savedResult } = await supabase
-        .from("results")
-        .insert({
-          user_id: userId,
-          resume_id: tailoredResumeId,
-          company_id: job.company_id || null,
-          job_id: job.id,
-          type: "build",
-          person_name: sourceTitle,
-          company_name: job.companies?.name,
-          job_title: job.title,
-          content: JSON.stringify(result),
-          metadata: {
-            source,
-            originalResumeId: source === "resume" ? resumeId : null,
-            emphasizedSkills: result.emphasizedSkills,
-            selectedExperiences: result.selectedExperiences,
-            duration_ms,
-          },
-        })
-        .select()
-        .single();
-
-      savedResultId = savedResult?.id;
+        // Log activity
+        const companyContext = job.companies?.name
+          ? ` at ${job.companies.name}`
+          : "";
+        logActivity({
+          userId,
+          action: "generate",
+          entityType: "resume",
+          entityId: tailoredResumeId,
+          durationMs: duration_ms,
+          sourceType: source,
+          relatedJobId: jobId,
+          relatedCompanyId: job.company_id || undefined,
+          displayTitle: `Generated resume from ${source === "resume" ? `'${sourceTitle}'` : "profile"} for ${job.title}${companyContext}`,
+        });
+      }
     }
 
     res.json({
       ...result,
       duration_ms,
-      savedResultId,
       tailoredResumeId,
     });
   })
