@@ -10,6 +10,7 @@ import {
   Modal,
   TextInput,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { IconPlus } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { JobCard } from "../components/shared/JobCard";
@@ -35,6 +36,7 @@ interface JobsPageProps {
 }
 
 export function JobsPage({ onNavigate }: JobsPageProps) {
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [jobs, setJobs] = useState<Job[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,7 +124,7 @@ export function JobsPage({ onNavigate }: JobsPageProps) {
       </Group>
 
       {jobs.length === 0 ? (
-        <Card shadow="sm" padding="xl">
+        <Card shadow="sm" padding={isMobile ? "md" : "xl"}>
           <Text c="dimmed" ta="center">
             No jobs yet. Add job postings you're interested in.
           </Text>
@@ -146,6 +148,7 @@ export function JobsPage({ onNavigate }: JobsPageProps) {
         opened={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         title="Add Job"
+        fullScreen={isMobile}
       >
         <Stack gap="md">
           <TextInput

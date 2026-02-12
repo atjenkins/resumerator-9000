@@ -11,6 +11,7 @@ import {
   Divider,
   ActionIcon,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { IconArrowLeft, IconTrash } from "@tabler/icons-react";
 import { getAnalysis, deleteAnalysis, type Analysis } from "../services/api";
@@ -25,6 +26,7 @@ export function AnalysisDetailPage({
   onNavigate,
   analysisId,
 }: AnalysisDetailPageProps) {
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
@@ -90,34 +92,64 @@ export function AnalysisDetailPage({
 
   return (
     <Stack gap="xl">
-      <Group justify="apart">
-        <Group>
-          <ActionIcon
-            variant="subtle"
-            size="lg"
-            onClick={() => onNavigate("dashboard")}
-          >
-            <IconArrowLeft />
-          </ActionIcon>
-          <div>
-            <Title order={1}>Analysis Details</Title>
-            <Text size="sm" c="dimmed">
-              {new Date(analysis.created_at).toLocaleString()}
-            </Text>
-          </div>
-        </Group>
-        <Group>
+      {isMobile ? (
+        <Stack gap="sm">
+          <Group>
+            <ActionIcon
+              variant="subtle"
+              size="lg"
+              onClick={() => onNavigate("dashboard")}
+            >
+              <IconArrowLeft />
+            </ActionIcon>
+            <div>
+              <Title order={1}>Analysis Details</Title>
+              <Text size="sm" c="dimmed">
+                {new Date(analysis.created_at).toLocaleString()}
+              </Text>
+            </div>
+          </Group>
           <Button
             color="red"
             variant="light"
             leftSection={<IconTrash size={16} />}
             onClick={handleDelete}
             loading={deleting}
+            fullWidth
           >
-            Delete
+            Delete Analysis
           </Button>
+        </Stack>
+      ) : (
+        <Group justify="apart">
+          <Group>
+            <ActionIcon
+              variant="subtle"
+              size="lg"
+              onClick={() => onNavigate("dashboard")}
+            >
+              <IconArrowLeft />
+            </ActionIcon>
+            <div>
+              <Title order={1}>Analysis Details</Title>
+              <Text size="sm" c="dimmed">
+                {new Date(analysis.created_at).toLocaleString()}
+              </Text>
+            </div>
+          </Group>
+          <Group>
+            <Button
+              color="red"
+              variant="light"
+              leftSection={<IconTrash size={16} />}
+              onClick={handleDelete}
+              loading={deleting}
+            >
+              Delete
+            </Button>
+          </Group>
         </Group>
-      </Group>
+      )}
 
       <Card shadow="sm" padding="lg">
         <Stack gap="md">

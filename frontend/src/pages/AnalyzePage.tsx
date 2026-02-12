@@ -14,6 +14,7 @@ import {
   SimpleGrid,
   Slider,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { AIProgressBar } from "../components/shared/AIProgressBar";
 import { AnalysisCard } from "../components/shared/AnalysisCard";
@@ -69,6 +70,7 @@ export function AnalyzePage({
   onNavigate,
   preSelectedResumeId,
 }: AnalyzePageProps) {
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [source, setSource] = useState<"resume" | "profile">(
     preSelectedResumeId ? "resume" : "profile",
   );
@@ -214,7 +216,7 @@ export function AnalyzePage({
     <Stack gap="xl">
       <Title order={1}>Analyze Document</Title>
 
-      <Card shadow="sm" padding="lg" withBorder>
+      <Card shadow="sm" padding={isMobile ? "md" : "lg"} withBorder>
         <Stack gap="md">
           <div>
             <Text fw={500} mb="xs">
@@ -293,7 +295,7 @@ export function AnalyzePage({
       </Card>
 
       {result && (
-        <Card shadow="sm" padding="lg" withBorder>
+        <Card shadow="sm" padding={isMobile ? "md" : "lg"} withBorder>
           <Stack gap="md">
             <Group justify="apart" align="start">
               <div>
@@ -405,11 +407,11 @@ export function AnalyzePage({
 
       <Divider my="xl" label="Past Analyses" labelPosition="center" />
 
-      <Card shadow="sm" padding="lg" withBorder>
+      <Card shadow="sm" padding={isMobile ? "md" : "lg"} withBorder>
         <Stack gap="md">
           <Text fw={500}>Filter Results</Text>
 
-          <Group grow>
+          <SimpleGrid cols={{ base: 1, sm: 2 }}>
             <Select
               label="Source Type"
               placeholder="All sources"
@@ -439,7 +441,7 @@ export function AnalyzePage({
               ]}
               clearable
             />
-          </Group>
+          </SimpleGrid>
 
           <div>
             <Text size="sm" fw={500} mb="xs">
@@ -469,7 +471,7 @@ export function AnalyzePage({
       )}
 
       {!loadingAnalyses && pastAnalyses.length === 0 && (
-        <Card shadow="sm" padding="lg">
+        <Card shadow="sm" padding={isMobile ? "md" : "lg"}>
           <Text c="dimmed" ta="center">
             No analyses found. Try adjusting your filters or run a new analysis.
           </Text>

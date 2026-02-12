@@ -8,6 +8,7 @@ import {
   FileButton,
   Text,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { IconUpload } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { useAuth } from "../contexts/AuthContext";
@@ -22,6 +23,7 @@ import {
 
 export function ProfilePage() {
   const { profile } = useAuth();
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -126,12 +128,12 @@ export function ProfilePage() {
       </Group>
 
       {enriching && (
-        <Card shadow="sm" padding="lg">
+        <Card shadow="sm" padding={isMobile ? "md" : "lg"}>
           <AIProgressBar isRunning={enriching} operationType="enrich" />
         </Card>
       )}
 
-      <Card shadow="sm" padding="lg">
+      <Card shadow="sm" padding={isMobile ? "md" : "lg"}>
         <Text c="dimmed" size="sm" mb="md">
           Your comprehensive professional profile. This serves as the source of
           truth for generating tailored resumes.

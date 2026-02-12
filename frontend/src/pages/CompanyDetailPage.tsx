@@ -10,6 +10,7 @@ import {
   Loader,
   SimpleGrid,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { IconArrowLeft, IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { MarkdownEditor } from "../components/shared/MarkdownEditor";
@@ -43,6 +44,7 @@ export function CompanyDetailPage({
   onNavigate,
   companyId,
 }: CompanyDetailPageProps) {
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -163,38 +165,73 @@ export function CompanyDetailPage({
 
   return (
     <Stack gap="xl">
-      <Group justify="space-between">
-        <Group>
-          <Button
-            variant="subtle"
-            leftSection={<IconArrowLeft size={16} />}
-            onClick={() => onNavigate("companies")}
-          >
-            Back
-          </Button>
-          <Title order={1}>Edit Company</Title>
+      {isMobile ? (
+        <Stack gap="sm">
+          <Group>
+            <Button
+              variant="subtle"
+              leftSection={<IconArrowLeft size={16} />}
+              onClick={() => onNavigate("companies")}
+            >
+              Back
+            </Button>
+            <Title order={1}>Edit Company</Title>
+          </Group>
+          <Group grow>
+            <Button
+              leftSection={<IconDeviceFloppy size={16} />}
+              onClick={handleSave}
+              loading={saving}
+              disabled={deleting}
+            >
+              Save
+            </Button>
+            <Button
+              color="red"
+              variant="light"
+              leftSection={<IconTrash size={16} />}
+              onClick={handleDelete}
+              loading={deleting}
+              disabled={saving}
+            >
+              Delete
+            </Button>
+          </Group>
+        </Stack>
+      ) : (
+        <Group justify="space-between">
+          <Group>
+            <Button
+              variant="subtle"
+              leftSection={<IconArrowLeft size={16} />}
+              onClick={() => onNavigate("companies")}
+            >
+              Back
+            </Button>
+            <Title order={1}>Edit Company</Title>
+          </Group>
+          <Group>
+            <Button
+              leftSection={<IconDeviceFloppy size={16} />}
+              onClick={handleSave}
+              loading={saving}
+              disabled={deleting}
+            >
+              Save Changes
+            </Button>
+            <Button
+              color="red"
+              variant="light"
+              leftSection={<IconTrash size={16} />}
+              onClick={handleDelete}
+              loading={deleting}
+              disabled={saving}
+            >
+              Delete
+            </Button>
+          </Group>
         </Group>
-        <Group>
-          <Button
-            leftSection={<IconDeviceFloppy size={16} />}
-            onClick={handleSave}
-            loading={saving}
-            disabled={deleting}
-          >
-            Save Changes
-          </Button>
-          <Button
-            color="red"
-            variant="light"
-            leftSection={<IconTrash size={16} />}
-            onClick={handleDelete}
-            loading={deleting}
-            disabled={saving}
-          >
-            Delete
-          </Button>
-        </Group>
-      </Group>
+      )}
 
       {relatedJobs.length > 0 && (
         <Card shadow="sm" padding="lg">

@@ -10,6 +10,7 @@ import {
   Box,
   SimpleGrid,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   IconUser,
   IconFileText,
@@ -45,6 +46,7 @@ interface FeatureSection {
 export function HomePage({ onNavigate }: HomePageProps) {
   const themeId = useThemeStore((s) => s.themeId);
   const appTheme = getTheme(themeId);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const featureSections: FeatureSection[] = [
     {
@@ -151,41 +153,81 @@ export function HomePage({ onNavigate }: HomePageProps) {
       <Box
         style={{
           background: appTheme.headerGradient,
-          padding: "6rem 2rem",
-          marginTop: "-2rem",
-          marginLeft: "-2rem",
-          marginRight: "-2rem",
+          padding: isMobile ? "3rem 1rem" : "6rem 2rem",
+          marginTop: isMobile ? "-0.75rem" : "-2rem",
+          marginLeft: isMobile ? "-0.75rem" : "-2rem",
+          marginRight: isMobile ? "-0.75rem" : "-2rem",
         }}
       >
         <Stack gap="lg" align="center">
-          <Title order={1} size="3.5rem" ta="center" c="white">
+          <Title
+            order={1}
+            size={isMobile ? "2rem" : "3.5rem"}
+            ta="center"
+            c="white"
+          >
             Resumerator 9000
           </Title>
-          <Text size="xl" ta="center" maw={700} c="white" opacity={0.9}>
+          <Text
+            size={isMobile ? "md" : "xl"}
+            ta="center"
+            maw={700}
+            c="white"
+            opacity={0.9}
+          >
             {appTheme.tagline}
           </Text>
-          <Text size="md" ta="center" maw={600} c="white" opacity={0.7}>
+          <Text
+            size={isMobile ? "sm" : "md"}
+            ta="center"
+            maw={600}
+            c="white"
+            opacity={0.7}
+          >
             AI-powered resume analysis and generation. Build once, tailor for
             every opportunity.
           </Text>
-          <Group mt="lg">
-            <Button
-              size="lg"
-              variant="white"
-              color="dark"
-              onClick={() => onNavigate("profile")}
-            >
-              Get Started
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              color="white"
-              onClick={() => onNavigate("dashboard")}
-            >
-              View Dashboard
-            </Button>
-          </Group>
+          {isMobile ? (
+            <Stack mt="lg" w="100%" maw={300}>
+              <Button
+                size="lg"
+                variant="white"
+                color="dark"
+                fullWidth
+                onClick={() => onNavigate("profile")}
+              >
+                Get Started
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                color="white"
+                fullWidth
+                onClick={() => onNavigate("dashboard")}
+              >
+                View Dashboard
+              </Button>
+            </Stack>
+          ) : (
+            <Group mt="lg">
+              <Button
+                size="lg"
+                variant="white"
+                color="dark"
+                onClick={() => onNavigate("profile")}
+              >
+                Get Started
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                color="white"
+                onClick={() => onNavigate("dashboard")}
+              >
+                View Dashboard
+              </Button>
+            </Group>
+          )}
         </Stack>
       </Box>
 
@@ -244,7 +286,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
         const cardSide = (
           <Card
             shadow="sm"
-            padding="xl"
+            padding={isMobile ? "md" : "xl"}
             withBorder
             style={{
               cursor: "pointer",
@@ -323,16 +365,21 @@ export function HomePage({ onNavigate }: HomePageProps) {
             key={feature.page}
             style={{
               backgroundColor: hasBg
-                ? "var(--mantine-color-gray-0)"
+                ? "var(--mantine-color-gray-1)"
                 : "transparent",
-              marginLeft: "-2rem",
-              marginRight: "-2rem",
-              padding: "3rem 2rem",
+              marginLeft: isMobile ? "-0.75rem" : "-2rem",
+              marginRight: isMobile ? "-0.75rem" : "-2rem",
+              padding: isMobile ? "2rem 1rem" : "3rem 2rem",
             }}
           >
             <Container size="xl">
               <SimpleGrid cols={{ base: 1, md: 2 }} spacing="xl">
-                {isReversed ? (
+                {isMobile ? (
+                  <>
+                    {cardSide}
+                    {howToSide}
+                  </>
+                ) : isReversed ? (
                   <>
                     {howToSide}
                     {cardSide}
@@ -351,7 +398,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
       {/* Bottom CTA */}
       <Container size="xl" py="xl" style={{ width: "100%" }}>
-        <Card shadow="sm" padding="xl" withBorder>
+        <Card shadow="sm" padding={isMobile ? "md" : "xl"} withBorder>
           <Stack align="center" gap="md">
             <Title order={3}>Ready to get started?</Title>
             <Text c="dimmed" ta="center" maw={600}>

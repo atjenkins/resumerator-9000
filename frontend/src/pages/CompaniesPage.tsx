@@ -10,6 +10,7 @@ import {
   Modal,
   TextInput,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { IconPlus } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { CompanyCard } from "../components/shared/CompanyCard";
@@ -29,6 +30,7 @@ interface CompaniesPageProps {
 }
 
 export function CompaniesPage({ onNavigate }: CompaniesPageProps) {
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -100,7 +102,7 @@ export function CompaniesPage({ onNavigate }: CompaniesPageProps) {
       </Group>
 
       {companies.length === 0 ? (
-        <Card shadow="sm" padding="xl">
+        <Card shadow="sm" padding={isMobile ? "md" : "xl"}>
           <Text c="dimmed" ta="center">
             No companies yet. Add companies you're interested in or applying to.
           </Text>
@@ -123,6 +125,7 @@ export function CompaniesPage({ onNavigate }: CompaniesPageProps) {
         opened={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         title="Add Company"
+        fullScreen={isMobile}
       >
         <Stack gap="md">
           <TextInput

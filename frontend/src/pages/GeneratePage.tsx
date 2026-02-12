@@ -15,6 +15,7 @@ import {
   useMantineTheme,
   SimpleGrid,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { marked } from "marked";
 import { AIProgressBar } from "../components/shared/AIProgressBar";
@@ -68,6 +69,7 @@ export function GeneratePage({
   preSelectedResumeId,
 }: GeneratePageProps) {
   const theme = useMantineTheme();
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [source, setSource] = useState<"resume" | "profile">(
     preSelectedResumeId ? "resume" : "profile"
   );
@@ -247,7 +249,7 @@ export function GeneratePage({
     <Stack gap="xl">
       <Title order={1}>Generate Tailored Resume</Title>
 
-      <Card shadow="sm" padding="lg">
+      <Card shadow="sm" padding={isMobile ? "md" : "lg"}>
         <Stack gap="md">
           <div>
             <Text fw={500} mb="xs">
@@ -325,7 +327,7 @@ export function GeneratePage({
 
       {result && (
         <>
-          <Card shadow="sm" padding="lg">
+          <Card shadow="sm" padding={isMobile ? "md" : "lg"}>
             <Stack gap="md">
               <Group justify="apart">
                 <div>
@@ -380,7 +382,7 @@ export function GeneratePage({
             </Stack>
           </Card>
 
-          <Card shadow="sm" padding="lg">
+          <Card shadow="sm" padding={isMobile ? "md" : "lg"}>
             <Title order={3} mb="md">
               Generated Resume Preview
             </Title>
@@ -402,7 +404,7 @@ export function GeneratePage({
 
       <Divider my="xl" label="Generation History" labelPosition="center" />
 
-      <Card shadow="sm" padding="lg">
+      <Card shadow="sm" padding={isMobile ? "md" : "lg"}>
         <Stack gap="md">
           <Text fw={500}>Filter Results</Text>
           
@@ -440,7 +442,7 @@ export function GeneratePage({
       )}
 
       {!loadingHistory && generatedResumes.length === 0 && (
-        <Card shadow="sm" padding="lg">
+        <Card shadow="sm" padding={isMobile ? "md" : "lg"}>
           <Text c="dimmed" ta="center">No generated resumes found. Try adjusting your filters or generate a new resume.</Text>
         </Card>
       )}

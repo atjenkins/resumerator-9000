@@ -11,6 +11,7 @@ import {
   TextInput,
   FileButton,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { IconPlus, IconUpload } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { ResumeCard } from "../components/shared/ResumeCard";
@@ -38,6 +39,7 @@ interface ResumesPageProps {
 }
 
 export function ResumesPage({ onNavigate }: ResumesPageProps) {
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -190,7 +192,7 @@ export function ResumesPage({ onNavigate }: ResumesPageProps) {
       </Group>
 
       {resumes.length === 0 ? (
-        <Card shadow="sm" padding="xl">
+        <Card shadow="sm" padding={isMobile ? "md" : "xl"}>
           <Text c="dimmed" ta="center">
             No resumes yet. Create one or upload an existing resume to get
             started.
@@ -216,6 +218,7 @@ export function ResumesPage({ onNavigate }: ResumesPageProps) {
         opened={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         title="Create New Resume"
+        fullScreen={isMobile}
       >
         <Stack gap="md">
           <TextInput

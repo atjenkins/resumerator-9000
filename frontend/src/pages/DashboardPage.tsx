@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Title, Grid, Card, Text, Stack, Group, Button } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   IconFileText,
   IconBriefcase,
@@ -20,6 +21,7 @@ interface DashboardPageProps {
 }
 
 export function DashboardPage({ onNavigate }: DashboardPageProps) {
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [stats, setStats] = useState({
     resumes: 0,
     companies: 0,
@@ -60,7 +62,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
         <Grid.Col span={{ base: 12, md: 6, lg: 3 }}>
           <Card
             shadow="sm"
-            padding="lg"
+            padding={isMobile ? "md" : "lg"}
             style={{ cursor: "pointer" }}
             onClick={() => onNavigate("resumes")}
           >
@@ -79,7 +81,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
         <Grid.Col span={{ base: 12, md: 6, lg: 3 }}>
           <Card
             shadow="sm"
-            padding="lg"
+            padding={isMobile ? "md" : "lg"}
             style={{ cursor: "pointer" }}
             onClick={() => onNavigate("companies")}
           >
@@ -98,7 +100,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
         <Grid.Col span={{ base: 12, md: 6, lg: 3 }}>
           <Card
             shadow="sm"
-            padding="lg"
+            padding={isMobile ? "md" : "lg"}
             style={{ cursor: "pointer" }}
             onClick={() => onNavigate("jobs")}
           >
@@ -117,7 +119,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
         <Grid.Col span={{ base: 12, md: 6, lg: 3 }}>
           <Card
             shadow="sm"
-            padding="lg"
+            padding={isMobile ? "md" : "lg"}
             style={{ cursor: "pointer" }}
             onClick={() => onNavigate("history")}
           >
@@ -134,7 +136,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
         </Grid.Col>
       </Grid>
 
-      <Card shadow="sm" padding="lg">
+      <Card shadow="sm" padding={isMobile ? "md" : "lg"}>
         <Title order={3} mb="md">
           Quick Actions
         </Title>
@@ -162,7 +164,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
         </Group>
       </Card>
 
-      <Card shadow="sm" padding="lg">
+      <Card shadow="sm" padding={isMobile ? "md" : "lg"}>
         <Title order={3} mb="md">
           Recent Activity
         </Title>

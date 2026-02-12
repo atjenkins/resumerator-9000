@@ -12,6 +12,7 @@ import {
   Badge,
   SimpleGrid,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { IconArrowLeft, IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { MarkdownEditor } from "../components/shared/MarkdownEditor";
@@ -66,6 +67,7 @@ export function ResumeDetailPage({
   onNavigate,
   resumeId,
 }: ResumeDetailPageProps) {
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [resume, setResume] = useState<Resume | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -210,39 +212,75 @@ export function ResumeDetailPage({
 
   return (
     <Stack gap="xl">
-      <Group justify="space-between">
-        <Group>
-          <Button
-            variant="subtle"
-            leftSection={<IconArrowLeft size={16} />}
-            onClick={() => onNavigate("resumes")}
-          >
-            Back
-          </Button>
-          <Title order={1}>Edit Resume</Title>
-          {resume.is_primary && <Badge color="yellow">Primary</Badge>}
-        </Group>
-        <Group>
-          <Button
-            leftSection={<IconDeviceFloppy size={16} />}
-            onClick={handleSave}
-            loading={saving}
-            disabled={deleting}
-          >
-            Save Changes
-          </Button>
-          <Button
-            color="red"
-            variant="light"
-            leftSection={<IconTrash size={16} />}
-            onClick={handleDelete}
-            loading={deleting}
+      {isMobile ? (
+        <Stack gap="sm">
+          <Group>
+            <Button
+              variant="subtle"
+              leftSection={<IconArrowLeft size={16} />}
+              onClick={() => onNavigate("resumes")}
+            >
+              Back
+            </Button>
+            <Title order={1}>Edit Resume</Title>
+            {resume.is_primary && <Badge color="yellow">Primary</Badge>}
+          </Group>
+          <Group grow>
+            <Button
+              leftSection={<IconDeviceFloppy size={16} />}
+              onClick={handleSave}
+              loading={saving}
+              disabled={deleting}
+            >
+              Save
+            </Button>
+            <Button
+              color="red"
+              variant="light"
+              leftSection={<IconTrash size={16} />}
+              onClick={handleDelete}
+              loading={deleting}
+              disabled={saving}
+            >
+              Delete
+            </Button>
+          </Group>
+        </Stack>
+      ) : (
+        <Group justify="space-between">
+          <Group>
+            <Button
+              variant="subtle"
+              leftSection={<IconArrowLeft size={16} />}
+              onClick={() => onNavigate("resumes")}
+            >
+              Back
+            </Button>
+            <Title order={1}>Edit Resume</Title>
+            {resume.is_primary && <Badge color="yellow">Primary</Badge>}
+          </Group>
+          <Group>
+            <Button
+              leftSection={<IconDeviceFloppy size={16} />}
+              onClick={handleSave}
+              loading={saving}
+              disabled={deleting}
+            >
+              Save Changes
+            </Button>
+            <Button
+              color="red"
+              variant="light"
+              leftSection={<IconTrash size={16} />}
+              onClick={handleDelete}
+              loading={deleting}
             disabled={saving}
           >
             Delete
           </Button>
         </Group>
       </Group>
+      )}
 
       {(jobId || companyId) && (
         <Card shadow="sm" padding="lg">

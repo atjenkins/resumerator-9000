@@ -7,7 +7,9 @@ import {
   Text,
   Button,
   MultiSelect,
+  SimpleGrid,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { ActivityCard } from "../components/shared/ActivityCard";
 import { getActivityLog, type ActivityLogEntry } from "../services/api";
@@ -17,6 +19,7 @@ interface HistoryPageProps {
 }
 
 export function HistoryPage({ onNavigate }: HistoryPageProps) {
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [activities, setActivities] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -76,10 +79,10 @@ export function HistoryPage({ onNavigate }: HistoryPageProps) {
         </Button>
       </Group>
 
-      <Card shadow="sm" padding="lg">
+      <Card shadow="sm" padding={isMobile ? "md" : "lg"}>
         <Stack gap="md">
           <Text fw={500} size="sm">Filters</Text>
-          <Group gap="md" grow>
+          <SimpleGrid cols={{ base: 1, sm: 2 }}>
             <MultiSelect
               label="Actions"
               placeholder="Select actions to show"
@@ -111,7 +114,7 @@ export function HistoryPage({ onNavigate }: HistoryPageProps) {
               ]}
               clearable
             />
-          </Group>
+          </SimpleGrid>
         </Stack>
       </Card>
 
@@ -119,7 +122,7 @@ export function HistoryPage({ onNavigate }: HistoryPageProps) {
         {loading && <Text c="dimmed">Loading...</Text>}
 
         {!loading && activities.length === 0 && (
-          <Card shadow="sm" padding="lg">
+          <Card shadow="sm" padding={isMobile ? "md" : "lg"}>
             <Text c="dimmed">No activity found</Text>
           </Card>
         )}
