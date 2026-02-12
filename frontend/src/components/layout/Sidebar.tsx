@@ -28,6 +28,7 @@ import {
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { ThemePicker } from "../shared/ThemePicker";
+import { KofiButton } from "../shared/KofiButton";
 
 interface SidebarProps {
   activePage: string;
@@ -240,6 +241,15 @@ export function Sidebar({
 
       {/* Bottom Section - Theme & Profile */}
       <Box mt="auto" pt="md">
+        <Box
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            padding: "0.5rem 0",
+          }}
+        >
+          <KofiButton variant="badge" tooltip={false} />
+        </Box>
         <Divider mb="md" />
 
         {isExpanded ? (
@@ -293,6 +303,8 @@ export function Sidebar({
                 <IconPalette size={20} />
               </ActionIcon>
             </Tooltip>
+
+            <KofiButton variant="icon" tooltip={true} />
 
             <Menu shadow="md" width={200} position="right-end">
               <Menu.Target>

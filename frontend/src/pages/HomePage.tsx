@@ -416,6 +416,36 @@ export function HomePage({ onNavigate }: HomePageProps) {
             </Group>
           </Stack>
         </Card>
+
+        {import.meta.env.VITE_KOFI_USERNAME && (
+          <Box mt="xl" mb="lg">
+            <Group justify="center" gap="xs">
+              <img
+                src="/kofi/cup.png"
+                alt="Ko-fi cup"
+                width={20}
+                style={{ display: "block", opacity: 0.7 }}
+              />
+              <Text size="sm" c="dimmed">
+                Built with love.{" "}
+                <a
+                  href={`https://ko-fi.com/${import.meta.env.VITE_KOFI_USERNAME}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: "#72A5F2",
+                    textDecoration: "none",
+                    fontWeight: 500,
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+                  onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+                >
+                  Support this project on Ko-fi
+                </a>
+              </Text>
+            </Group>
+          </Box>
+        )}
       </Container>
     </Stack>
   );

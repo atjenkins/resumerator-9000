@@ -27,6 +27,7 @@ import {
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { ThemePicker } from "../shared/ThemePicker";
+import { KofiButton } from "../shared/KofiButton";
 
 interface BottomNavProps {
   activePage: string;
@@ -155,6 +156,10 @@ export function BottomNav({ activePage, onNavigate }: BottomNavProps) {
           >
             Change Theme
           </Button>
+
+          <Box style={{ display: "flex", justifyContent: "center", padding: "0.5rem 0" }}>
+            <KofiButton variant="banner" tooltip={false} />
+          </Box>
 
           <Menu shadow="md" width={200}>
             <Menu.Target>

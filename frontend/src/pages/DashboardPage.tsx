@@ -15,6 +15,7 @@ import {
   getJobs,
   getAnalyses,
 } from "../services/api";
+import { KofiButton } from "../components/shared/KofiButton";
 
 interface DashboardPageProps {
   onNavigate: (page: string) => void;
@@ -170,6 +171,34 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
         </Title>
         <Text c="dimmed">No recent activity</Text>
       </Card>
+
+      {import.meta.env.VITE_KOFI_USERNAME && (
+        <Card
+          shadow="sm"
+          padding={isMobile ? "md" : "lg"}
+          style={{
+            background: "linear-gradient(135deg, #f0f6ff 0%, #e8f4ff 100%)",
+            borderColor: "#72A5F2",
+          }}
+        >
+          <Stack gap="md" align="center">
+            <Group gap="sm">
+              <img
+                src="/kofi/cup.png"
+                alt="Ko-fi cup"
+                width={32}
+                style={{ display: "block" }}
+              />
+              <Title order={3}>Enjoying Resumerator?</Title>
+            </Group>
+            <Text ta="center" maw={500}>
+              If this tool helps you land your next role, consider buying me a
+              coffee! Your support helps keep this project running.
+            </Text>
+            <KofiButton variant="banner" tooltip={false} />
+          </Stack>
+        </Card>
+      )}
     </Stack>
   );
 }
